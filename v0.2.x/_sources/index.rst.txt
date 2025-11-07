@@ -119,7 +119,7 @@ Validation
                 .. image:: _images/examples/datasets/orders.svg
                    :width: 90%
                    :align: center
-                   :target: pages/tutorials.html#orders-block
+                   :target: pages/tutorials#orders-block
 
             .. code-block:: python
 
@@ -170,12 +170,12 @@ Validation
                 .. image:: _images/examples/datasets/orders.svg
                    :width: 90%
                    :align: center
-                   :target: pages/tutorials.html#orders-block
+                   :target: pages/tutorials#orders-block
 
                 .. image:: _images/examples/datasets/customers.svg
                    :width: 70%
                    :align: center
-                   :target: pages/tutorials.html#customers-block
+                   :target: pages/tutorials#customers-block
 
             .. code-block:: python
 

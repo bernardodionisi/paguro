@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const genericsToRemove = [
         // "paguro.models.vfm.vfmodel.VFrameModel",
         "U",
-        "M",
+        // "M",
     ];
 
     const removeSpecificGenerics = (root) => {

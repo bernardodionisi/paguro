@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const genericsToRemove = [
-        "paguro.models.vfm.vfmodel.VFrameModel",
+        // "paguro.models.vfm.vfmodel.VFrameModel",
         "U",
         "M",
     ];

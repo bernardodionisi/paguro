@@ -76,7 +76,7 @@ Validation
                 .. image:: _images/examples/datasets/orders.svg
                    :width: 90%
                    :align: center
-                   :target: pages/tutorials.html#orders-block
+                   :target: pages/tutorials#orders-block
 
             .. code-block:: python
 

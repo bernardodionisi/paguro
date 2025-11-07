@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+  pull_request:
+    branches:
+      - main
+      - 'release/*'
+  workflow_call:
+
+jobs:
+  build-wheel:
+    name: Wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all commits and tags, needed for intermediate versions
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Upgrade packaging tools
+        run: uv pip install --system --upgrade setuptools setuptools_scm wheel build twine
+
+      - name: Show package version
+        run: python3 -m setuptools_scm
+
+      - name: Build the `paguro` package
+        run: python -m build
+
+      - name: Verify the wheel file
+        run: python -m twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 30

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+ width="296"  height="315"  viewBox="0 0 296 315">
+  <text x="10" y="30"
+        font-family="Menlo, SF Mono, Consolas, monospace"
+        font-size="20"
+        fill="#666"
+        xml:space="preserve">
+    <tspan x="10" dy="0" font-weight="bold">orders_simple</tspan>
+    <tspan x="10" dy="12.5"></tspan>
+    <tspan x="10" dy="25">┌──────┬──────────────┐</tspan>
+    <tspan x="10" dy="25">│ id   ┆ total_amount │</tspan>
+    <tspan x="10" dy="25">│ ---  ┆ ---          │</tspan>
+    <tspan x="10" dy="25">│ i64  ┆ i64          │</tspan>
+    <tspan x="10" dy="25">╞══════╪══════════════╡</tspan>
+    <tspan x="10" dy="25">│ 1001 ┆ null         │</tspan>
+    <tspan x="10" dy="25">│ 1002 ┆ 180          │</tspan>
+    <tspan x="10" dy="25">│ 1003 ┆ -50          │</tspan>
+    <tspan x="10" dy="25">│ 1004 ┆ 120          │</tspan>
+    <tspan x="10" dy="25">└──────┴──────────────┘</tspan>
+  </text>
+</svg>

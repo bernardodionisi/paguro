@@ -1,0 +1,123 @@
+User Guide
+==========
+
+Please refer to the index page for some :ref:`basic usage examples <quick-examples-block>`.
+
+.. paguro-example:: Versions used in the tutorials
+    :collapsible:
+
+    .. ipython:: python
+
+       import paguro as pg
+
+       pg.show_versions()
+
+.. _datasets-block:
+
+.. paguro-data-definition:: Data Used in Tutorials
+    :collapsible: open
+
+    .. paguro-table:: customers
+        :collapsible:
+
+        .. _customers-block:
+
+        .. code-block:: python
+
+            customers = pl.DataFrame(
+                {
+                    "id": ["C001", "C002", "C003", "C004"],
+                    "name": ["Alice Wong", "Bob Smith", "Carol Jones", None],
+                    "email": ["alice@company.com", None, "caroljones", "david@company.com"],
+                    "age": [29, 34, 41, -5],
+                }
+            )
+
+        .. ipython:: python
+
+            print(customers)
+
+
+
+    .. paguro-table:: orders
+        :collapsible:
+
+        .. _orders-block:
+
+        .. code-block:: python
+
+            orders = (
+                pl.DataFrame(
+                    {
+                        "id": [1001, 1002, 1003, 1004],
+                        "customer_id": ["C001", "C002", "C003", "C005"],
+                        "order_date": ["2024-03-10", "2025-01-01", "2025-03-15", None],
+                        "delivery_date": ["2024-03-14", "2024-09-01", "2025-03-18", "2025-03-20"],
+                        "total_amount": [None, 180, -50, 120],
+                    }
+                ).with_columns(
+                    pl.col("order_date", "delivery_date").cast(pl.Date),
+                )
+            )
+
+        .. ipython:: python
+
+            print(orders)
+
+    .. paguro-table:: customers_nested
+        :collapsible:
+
+        .. _customers_with_struct-block:
+
+        .. code-block:: python
+
+            customers_nested = pl.DataFrame([
+                {
+                    "id": "C001",
+                    "contact": {"name": "Alice Wong", "email": "alice@company.com"},
+                    "meta": {"age": 29, "country": "US"},
+                },
+                {
+                    "id": "C002",
+                    "contact": {"name": "Bob Smith", "email": None},
+                    "meta": {"age": 34, "country": "Canada"},
+                },
+                {
+                    "id": "C003",
+                    "contact": {"name": "Carol Jones", "email": "caroljones"},
+                    "meta": {"age": 41, "country": "US"},
+                },
+                {
+                    "id": "C004",
+                    "contact": {"name": None, "email": "david@company.com"},
+                    "meta": {"age": -5, "country": "England"},
+                },
+            ])
+
+        .. ipython:: python
+
+            print(customers_nested)
+
+    .. paguro-table:: orders_nested
+        :collapsible:
+
+        .. _orders_with_struct-block:
+
+        .. code-block:: python
+
+            orders_nested = (
+                orders
+                .with_columns(
+                    customer_id=pl.DataFrame(customers_nested).to_struct()
+                )
+                .rename({"customer_id": "customer"})
+            )
+
+
+
+        .. ipython:: python
+
+            print(orders_nested)
+
+
+🔊 Stay tuned for tutorial releases! 🔊

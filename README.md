@@ -5,12 +5,14 @@
 </p>
 
 
-`Paguro` is a Python library built on Polars that provides efficient and rich tools for:
+`Paguro` is a Python library built on top Polars that provides efficient and rich tools for:
 
 - Data **validation** and **models**
-- Custom **information management**
-- Comprehensive **summary statistics**
+- Persistent custom **information**
+- Customizable **summary statistics**
 - And much more!
+
+*All with informative and beautiful terminal output!*
 
 ---
 
@@ -82,4 +84,9 @@ valid_frame.validate({"a": [0, 1, 2], "b": ["z", "y", "x"]})
 
 Paguro contains many features, including a model-based API for validation and static typing of
 columns, please visit the [Documentation](https://bernardodionisi.github.io/paguro/latest/) and
-stay tuned for more examples! 
+stay tuned for more examples!
+
+---
+
+**Paguro** is distributed under the [Apache License, Version 2.0](https://spdx.org/licenses/Apache-2.0.html).  
+&copy; 2025 Bernardo Dionisi | SPDX-License-Identifier: Apache-2.0

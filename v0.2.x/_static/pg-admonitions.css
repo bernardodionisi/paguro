@@ -1,0 +1,80 @@
+/* Remove border and shadow only for the paguro-example admonition */
+details.admonition[class^="paguro-"],
+div.admonition[class^="paguro-"] {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+details.admonition[class^="paguro-"],
+div.admonition[class^="paguro-"] {
+    background-color: rgba(54, 69, 79, 0.03);
+    /*padding: 0.75em 1em;x*/
+}
+
+details.admonition[class^="paguro-"] > *:not(summary),
+div.admonition[class^="paguro-"] > *:not(summary) * {
+    font-size: 1.001em;
+    /*line-height: 1.3;*/
+}
+
+details.admonition[class^="paguro-"] > summary.admonition-title,
+div.admonition[class^="paguro-"] > .admonition-title {
+    /*font-size: 1.2rem;   */
+    color: #797A7D;
+    /*line-height: 0;*/
+}
+/*details.admonition[class^="paguro-"] > summary.admonition-title,*/
+/*div.admonition[class^="paguro-"] > .admonition-title {*/
+/*  font-size: 1.15rem;   !* change size *!*/
+/*  color: #2b6cb0;       !* change color *!*/
+/*  font-weight: 700;     !* optional: make it bolder *!*/
+/*}*/
+/* --- --- */
+
+/* Only style direct children (not the summary) that are NOT another admonition */
+
+
+/* --- Variant override for paguro-* --- */
+
+/*details.admonition.paguro-table > summary.admonition-title,*/
+/*div.admonition.paguro-table > .admonition-title {*/
+/*    !*font-size: 1.2rem;   *!*/
+/*    color: #3A3D45;*/
+/*    !*line-height: 0;*!*/
+/*}*/
+
+/*----------------------------------------*/
+
+
+/*----------------------------------------*/
+
+
+/*details.admonition,*/
+/*div.admonition {*/
+/*    border: none !important;*/
+/*    box-shadow: none !important;*/
+/*}*/
+
+/*!* Optional: adjust background or spacing *!*/
+/*details.admonition {*/
+/*    background-color: rgba(54, 69, 79, 0.03);*/
+/*    padding: 0.75em 1em;*/
+/*}*/
+
+details.admonition,
+div.admonition {
+    border: 1px solid rgba(54, 69, 79, 0.15); /* subtle translucent border */
+    box-shadow: none; /* remove heavy shadow */
+    background-color: rgba(54, 69, 79, 0.02); /* very light background tint */
+    padding: 0.75em 1em;
+    border-radius: 6px; /* optional, softer edges */
+}
+
+/*!* Increase font size inside the paguro-example admonition, but not the title *!*/
+/*details.admonition.paguro-example > *:not(summary) {*/
+/*  font-size: 1.05em;   !* Slightly larger *!*/
+/*  line-height: 1.5;    !* Better readability *!*/
+/*}*/
+
+
+

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+ width="1052"  height="315"  viewBox="0 0 1052 315">
+  <text x="10" y="30"
+        font-family="Menlo, SF Mono, Consolas, monospace"
+        font-size="20"
+        fill="#666"
+        xml:space="preserve">
+    <tspan x="10" dy="0" font-weight="bold">orders_nested</tspan>
+    <tspan x="10" dy="12.5"></tspan>
+    <tspan x="10" dy="25">┌──────┬─────────────────────────────────┬────────────┬───────────────┬──────────────┐</tspan>
+    <tspan x="10" dy="25">│ id   ┆ customer                        ┆ order_date ┆ delivery_date ┆ total_amount │</tspan>
+    <tspan x="10" dy="25">│ ---  ┆ ---                             ┆ ---        ┆ ---           ┆ ---          │</tspan>
+    <tspan x="10" dy="25">│ i64  ┆ struct[3]                       ┆ date       ┆ date          ┆ i64          │</tspan>
+    <tspan x="10" dy="25">╞══════╪═════════════════════════════════╪════════════╪═══════════════╪══════════════╡</tspan>
+    <tspan x="10" dy="25">│ 1001 ┆ {"C001",{"Alice Wong","alice@c… ┆ 2024-03-10 ┆ 2024-03-14    ┆ null         │</tspan>
+    <tspan x="10" dy="25">│ 1002 ┆ {"C002",{"Bob Smith",null},{34… ┆ 2025-01-01 ┆ 2024-09-01    ┆ 180          │</tspan>
+    <tspan x="10" dy="25">│ 1003 ┆ {"C003",{"Carol Jones","carolj… ┆ 2025-03-15 ┆ 2025-03-18    ┆ -50          │</tspan>
+    <tspan x="10" dy="25">│ 1004 ┆ {"C004",{null,"david@company.c… ┆ null       ┆ 2025-03-20    ┆ 120          │</tspan>
+    <tspan x="10" dy="25">└──────┴─────────────────────────────────┴────────────┴───────────────┴──────────────┘</tspan>
+  </text>
+</svg>

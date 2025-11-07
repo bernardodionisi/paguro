@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+ width="728"  height="315"  viewBox="0 0 728 315">
+  <text x="10" y="30"
+        font-family="Menlo, SF Mono, Consolas, monospace"
+        font-size="20"
+        fill="#666"
+        xml:space="preserve">
+    <tspan x="10" dy="0" font-weight="bold">customers_nested</tspan>
+    <tspan x="10" dy="12.5"></tspan>
+    <tspan x="10" dy="25">┌──────┬─────────────────────────────────┬────────────────┐</tspan>
+    <tspan x="10" dy="25">│ id   ┆ contact                         ┆ meta           │</tspan>
+    <tspan x="10" dy="25">│ ---  ┆ ---                             ┆ ---            │</tspan>
+    <tspan x="10" dy="25">│ str  ┆ struct[2]                       ┆ struct[2]      │</tspan>
+    <tspan x="10" dy="25">╞══════╪═════════════════════════════════╪════════════════╡</tspan>
+    <tspan x="10" dy="25">│ C001 ┆ {"Alice Wong","alice@company.c… ┆ {29,"US"}      │</tspan>
+    <tspan x="10" dy="25">│ C002 ┆ {"Bob Smith",null}              ┆ {34,"Canada"}  │</tspan>
+    <tspan x="10" dy="25">│ C003 ┆ {"Carol Jones","caroljones"}    ┆ {41,"US"}      │</tspan>
+    <tspan x="10" dy="25">│ C004 ┆ {null,"david@company.com"}      ┆ {-5,"England"} │</tspan>
+    <tspan x="10" dy="25">└──────┴─────────────────────────────────┴────────────────┘</tspan>
+  </text>
+</svg>

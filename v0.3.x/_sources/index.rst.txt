@@ -210,20 +210,12 @@ License
 
 .. |copy| unicode:: U+00A9
 
-|copy| 2025 Bernardo Dionisi
+**Paguro** is distributed under the `Apache License, Version 2.0 <https://spdx.org/licenses/Apache-2.0.html>`_.
 
-SPDX-License-Identifier: Apache-2.0
-
-This software is licensed under the **Apache License, Version 2.0**.
-You may obtain a copy of the license at: http://www.apache.org/licenses/LICENSE-2.0
-
-Please see the License for the specific language governing permissions and
-limitations under the License.
-
+|copy| 2025 Bernardo Dionisi | SPDX-License-Identifier: Apache-2.0
 
 Acknowledgements
 ================
-
 
 .. acknowledgements::
 

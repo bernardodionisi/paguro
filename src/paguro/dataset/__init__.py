@@ -46,7 +46,7 @@ class ValidateDataFrame:
         if validation is None:
             raise TypeError("Please provide one or more validators.")
 
-        return validation.validate(
+        return validation.validate(  # type: ignore[return-value]
             data=self._df,
             mode=mode,
             keep_columns=keep_columns,
@@ -77,7 +77,7 @@ class ValidateLazyFrame:
         if validation is None:
             raise TypeError("Please provide one or more validators.")
 
-        return validation.validate(
+        return validation.validate(  # type: ignore[return-value]
             data=self._df,
             mode=mode,
             keep_columns=keep_columns,

@@ -16,15 +16,15 @@ def replace_predicate(
         *,
         expr: pl.Expr,
         struct_fields: tuple[str, ...],
-) -> pl.Expr | None:
+) -> pl.Expr:
     try:
         return replace_expression_root(
             expr=expr,
             new_root=get_struct_expr(struct_fields=struct_fields),
         )
-    except Exception:
-        warnings.warn(f"unable to determine predicete for {struct_fields}")
-        return None
+    except Exception as e:
+        msg = f"unable to determine predicate for {struct_fields}"
+        raise type(e)(msg) from e
 
 
 def replace_expr(
@@ -105,7 +105,7 @@ def _dispatch_expr_args_for_errors(
             with_row_index=with_row_index,
         )
         if _struct_fields:
-            predicate: pl.Expr | None = replace_predicate(
+            predicate = replace_predicate(
                 expr=value,
                 struct_fields=_struct_fields,
             )
@@ -141,7 +141,8 @@ def _dispatch_expr_args_for_predicates(
             with_row_index=False,
         )
         if _struct_fields:
-            predicate: pl.Expr | None = replace_predicate(
+            # replace_predicate will raise if we are unable to replace root
+            predicate: pl.Expr = replace_predicate(
                 expr=value,
                 struct_fields=_struct_fields,
             )

@@ -232,13 +232,14 @@ class ValidColumn(_ValidBase):
 
         dtype = self._dtype
         if dtype is not None:
-            dtype = list(dtype)
+            # just for display
+            dtype = list(dtype)  # type: ignore[assignment]
 
         if self._constraints:
             # should we display them in order
             constraints = set(self._constraints.keys())
         else:
-            constraints = {}
+            constraints = set()
 
         # class_name = {self.__class__.__qualname__}
         class_name = "ValidColumn"
@@ -475,7 +476,8 @@ class ValidColumn(_ValidBase):
 
         if include_info:
             out["info"] = (
-                None if self._info is None else self._info.to_dict()
+                None if self._info is None
+                else self._info.to_dict()
             )
 
         return out
@@ -495,13 +497,12 @@ class ValidColumn(_ValidBase):
         allow_drop = vcol_dict.pop("allow_drop", True)
         allow_rename = vcol_dict.pop("allow_rename", False)
 
-        # TODO: check that fields deserializes correctly
         fields = vcol_dict.pop("fields")
         if fields is not None:
             from paguro.validation.validation import Validation
             fields = Validation._from_dict(fields)
 
-        _info: dict | None = vcol_dict.pop("info", None)
+        info_dict: dict | None = vcol_dict.pop("info", None)
 
         # --------
 
@@ -511,11 +512,10 @@ class ValidColumn(_ValidBase):
         instance = instance._set_allow_drop(allow_drop=allow_drop)
         instance = instance._set_allow_rename(allow_rename=allow_rename)
 
-        if _info is not None:
-            instance._info = InfoCollection._from_dict_with_attributes(
-                info_list_dict=_info)
-        # else:
-        #     instance._info = None
+        if info_dict is not None:
+            instance._info = InfoCollection.from_dict(info_dict)
+        else:
+            instance._info = None
 
         return instance
 
@@ -1008,13 +1008,17 @@ class ValidColumn(_ValidBase):
             _struct_fields = (*_struct_fields, self._name)
 
         if schema is not None:
-            struct_: pl.Struct = schema[self._name]
+            # here name is the column name of a vcol that has fields
+            # only struct vcols can have fields
+            struct_: pl.Struct = schema[self._name]  # type: ignore[assignment]
             if not isinstance(struct_, pl.Struct):
-                msg = (f"{self._name} must be a Struct "
-                       f"in order to extract fields schema, got {struct_}."
-                       )
+                msg = (
+                    f"{self._name} must be a Struct "
+                    f"in order to extract fields schema, got {struct_}."
+                )
                 raise ValueError(msg)
-            schema = struct_.to_schema()  # todo: check!
+
+            schema = pl.Schema(struct_.to_schema())
 
         predicates = self._fields._gather_predicates(
             schema=schema,

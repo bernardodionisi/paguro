@@ -900,40 +900,6 @@ class VFrameModel(metaclass=_VFrameMeta):
     _valid_frames_tuple: ClassVar[tuple[ValidFrame, ...]]
     _valid_frame: ClassVar[ValidFrame]
 
-    def __call__(self) -> pl.Expr:
+    def __call__(self) -> pl.Expr:  # type: ignore[empty-body]
         # this has no effect and it is defined here for typing purposes
-        ...
-
-    # think about setting validate here
-    # @classmethod
-    # @set_doc_string(parameters=VALIDATE_PARAMS)
-    # def validate(
-    #         cls,
-    #         data: IntoValidation,
-    #         *,
-    #         mode: ValidationMode = "all",
-    #         keep_columns: IntoKeepColumns = False,
-    #         collect: bool | dict = True,
-    #         on_success: OnSuccess = "return_none",
-    #         on_failure: OnFailureExtra = "raise",
-    #         cast: bool = False,
-    # ) -> FrameLike | ValidationError | None:
-    #     """
-    #     Validate the target data using the model.
-    #
-    #     {{ Parameters }}
-    #
-    #     Group
-    #     -----
-    #         Validation
-    #     """
-    #
-    #     return cls._valid_frame.validate(
-    #         data=data,
-    #         mode=mode,
-    #         keep_columns=keep_columns,
-    #         collect=collect,
-    #         on_success=on_success,
-    #         on_failure=on_failure,
-    #         cast=cast,
-    #     )
+        pass

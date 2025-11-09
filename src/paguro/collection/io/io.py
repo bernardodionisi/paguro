@@ -10,13 +10,15 @@ if TYPE_CHECKING:
 
 
 def scan_parquet(
-    path: Path | str,
-    *,
-    all_independent: bool = True,
-    **kwargs: Any,
+        path: Path | str,
+        *,
+        all_independent: bool = True,
+        **kwargs: Any,
 ) -> LazyCollection:
-    # TODO: scan as dataset to include validation?
     data = _scan_parquet(
-        path=path, all_independent=all_independent, **kwargs
+        path=path,
+        all_independent=all_independent, **kwargs
     )
-    return LazyCollection(data=data)
+    return LazyCollection(
+        data=data,  # type: ignore[arg-type]
+    )

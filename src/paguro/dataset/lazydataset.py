@@ -82,7 +82,7 @@ class LazyDataset(_Dataset[pl.LazyFrame], _LazyFrame, Generic[VFM]):
     """
 
     _data: pl.LazyFrame
-    _model: VFM | None
+    _model: VFM | None  # type: ignore[assignment]
 
     def __init__(
             self,
@@ -138,7 +138,10 @@ class LazyDataset(_Dataset[pl.LazyFrame], _LazyFrame, Generic[VFM]):
             *,
             overwrite: bool = False,
     ) -> LazyDataset[U]:
-        return super()._with_model(model=model, overwrite=overwrite)
+        return super()._with_model(  # type: ignore[return-value]
+            model=model,
+            overwrite=overwrite
+        )
 
     def without_model(
             self,
@@ -159,38 +162,36 @@ class LazyDataset(_Dataset[pl.LazyFrame], _LazyFrame, Generic[VFM]):
 
     # ------------------------------------------------------------------
 
-    def _sink_parquet(  # type: ignore[override]
+    def sink_parquet(
             self,
             path: str | Path | IO[bytes] | IO[str] | PartitioningScheme,
             *,
-            write_metadata: bool = True,
-            json_encoder: type[JSONEncoder] | None = CustomJSONEncoder,
+            write_paguro_metadata: bool = True,
             **kwargs: Any,
     ) -> None:
         """
-        Polars' .sink_parquet().
+        Sink parquet.
 
         Group
         -----
-            Overridden
+            Adapted
         """
-        metadata = (
-            self._get_paguro_metadata(
-                # if write_metadata is string/Path -> json
-                encode="as_dict"
-                if isinstance(write_metadata, bool)
-                else False,
-                json_encoder=json_encoder,
+
+        metadata = self._metadata_for_polars_parquet(
+            write_paguro_metadata=write_paguro_metadata,
+            kwargs=kwargs,
+        )
+        if metadata:
+            self._getattr("sink_parquet")(
+                path=path,
+                metadata=metadata,
+                **kwargs,
             )
-            if write_metadata
-            else None
-        )
-
-        # TODO: have the kwargs metadata take priority
-
-        return self._getattr("sink_parquet")(
-            path=path, metadata=metadata, **kwargs
-        )
+        else:
+            self._getattr("sink_parquet")(
+                path=path,
+                **kwargs
+            )
 
     # ------------------------------------------------------------------
 
@@ -323,7 +324,7 @@ class LazyDataset(_Dataset[pl.LazyFrame], _LazyFrame, Generic[VFM]):
             raise TypeError("other must be a LazyDataset or pl.LazyFrame")
 
         return super()._join(
-            other=other,
+            other=other,  # type: ignore[arg-type]
             on=on,
             how=how,
             left_on=left_on,
@@ -366,7 +367,7 @@ class LazyDataset(_Dataset[pl.LazyFrame], _LazyFrame, Generic[VFM]):
         if not isinstance(other, (LazyDataset, pl.LazyFrame)):
             raise TypeError("other must be a LazyDataset or pl.LazyFrame")
         return super()._join_asof(
-            other=other,
+            other=other,  # type: ignore[arg-type]
             left_on=left_on,
             right_on=right_on,
             on=on,
@@ -400,7 +401,7 @@ class LazyDataset(_Dataset[pl.LazyFrame], _LazyFrame, Generic[VFM]):
         if not isinstance(other, (LazyDataset, pl.LazyFrame)):
             raise TypeError("other must be a LazyDataset or pl.LazyFrame")
         return super()._join_where(
-            other,
+            other,  # type: ignore[arg-type]
             *predicates,
             suffix=suffix,
         )
@@ -421,7 +422,7 @@ class LazyDataset(_Dataset[pl.LazyFrame], _LazyFrame, Generic[VFM]):
             raise TypeError("other must be a LazyDataset or pl.LazyFrame")
 
         return super()._merge_sorted(
-            other=other,
+            other=other,  # type: ignore[arg-type]
             key=key,
         )
 

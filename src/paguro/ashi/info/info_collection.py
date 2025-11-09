@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, Callable, Literal
 
 from paguro.ashi.info.info import Info, SchemaMode
@@ -14,7 +14,6 @@ if TYPE_CHECKING:
         from typing import Self
     else:
         from typing_extensions import Self
-    from collections.abc import Mapping
     from paguro.ashi.typing import InfoTypes
 
 __all__ = ["InfoCollection", "MissingInfoNameException", "callable_to_column_mapping"]
@@ -165,14 +164,22 @@ class InfoCollection:
 
         for info in self._info:
             if info._is_schema_level:
-                info.set_schema(mode="enforced", keys=keys_set, normalize_existing=True)
+                info.set_schema(
+                    mode="enforced",
+                    keys=keys_set,
+                    normalize_existing=True
+                )
 
         if drop_empty != "never":
             if drop_empty == "schema":
-                self._info = [i for i in self._info if
-                              not (i._is_schema_level and len(i.info) == 0)]
+                self._info = [
+                    i for i in self._info if
+                    not (i._is_schema_level and len(i.info) == 0)
+                ]
             else:  # "all"
-                self._info = [i for i in self._info if len(i.info) > 0]
+                self._info = [
+                    i for i in self._info if len(i.info) > 0
+                ]
 
     # Immutable counterparts
 
@@ -271,7 +278,7 @@ class InfoCollection:
 
         return new
 
-    def update(self, info: str | Info | None = None, **mapping: Any) -> Self:
+    def update(self, info: str | Info | None = None, **mapping: Any, ) -> Self:
         """
         Immutable update.
 
@@ -289,7 +296,7 @@ class InfoCollection:
             return new._update_named(info=info, **mapping)
         return new._update_from_mapping(**mapping)
 
-    def append(self, info: str | Info, **mapping: Any) -> Self:
+    def append(self, info: str | Info, **mapping: Any, ) -> Self:
         """
         Immutable append.
 
@@ -318,7 +325,11 @@ class InfoCollection:
 
     # ----------------- internals for update routing -----------------
 
-    def _update_named(self, info: str | Info, **mapping: Any) -> Self:
+    def _update_named(
+            self,
+            info: str | Info,
+            **mapping: Any,
+    ) -> Self:
         """Create-or-update a specific target by name/instance (immutable on `self`)."""
         name = info if isinstance(info, str) else info._name
 
@@ -341,7 +352,10 @@ class InfoCollection:
 
         return self
 
-    def _update_from_mapping(self, **mapping: Any) -> Self:
+    def _update_from_mapping(
+            self,
+            **mapping: Any,
+    ) -> Self:
         """
         Bare mapping update (no target name). Heuristic:
         - If mapping keys ⊆ collection schema and exactly one schema-level member: update it.
@@ -415,25 +429,85 @@ class InfoCollection:
         """Plain dict materialization: {name: { ... }} (no attributes)."""
         out: dict[str, dict[str, Any]] = {}
         for i in self._info:
-            body = i.to_dict(include_name=False)
+            body = dict(i.to_dict(include_name=False))
             if body or keep_empty:
-                out[i._name] = dict(body)
+                out[i._name] = body
         return out
 
-    def serialize(self) -> str:
+    def _serialize(self) -> str:
         """JSON serialization of `to_dict` (no attributes)."""
         return json.dumps(self.to_dict(keep_empty=False))
 
     @classmethod
-    def deserialize(cls, source: str) -> InfoCollection:
-        """Create from JSON produced by `serialize` (non-attribute variant)."""
-        content = json.loads(source)
+    def from_dict(
+            cls,
+            content: Mapping[str, Mapping[str, Any]],
+            *,
+            schema_keys: Iterable[str] | None = None,
+    ) -> InfoCollection:
+        """
+        Recreate an InfoCollection from a mapping produced by `to_dict`
+        (non-attribute variant).
+
+        If `schema_keys` is provided, it is treated as the *current* dataset
+        schema. Each Info item is flagged as schema-level when all of its mapping
+        keys are contained in `schema_keys` (and the mapping is non-empty).
+        Schema-level items are set to enforced mode over the full current schema.
+        """
+        if not isinstance(content, Mapping):
+            msg = (
+                f"`content` must be a mapping "
+                f"of name -> mapping, got {type(content)!r}"
+            )
+            raise TypeError(msg)
+
         items: list[Info] = []
+        cols_set: set[str] = set(schema_keys or ())
+
         for name, mapping in content.items():
-            items.append(Info(name=name).update(**mapping))
+            # Normalize non-dict-like values
+            if not isinstance(mapping, Mapping):
+                msg = (
+                    f"Item {name!r} must map "
+                    f"to a dict-like object, got {type(mapping)!r}"
+                )
+                raise TypeError(msg)
+
+            info = Info(name=name).update(**mapping)
+
+            keys = set(mapping.keys())
+            if cols_set and keys and keys.issubset(cols_set):
+                # schema-level: enforce on current schema and remember the flag
+                info.set_schema(
+                    mode="enforced",
+                    keys=cols_set,
+                    normalize_existing=True,
+                )
+                info._is_schema_level = True  # internal flag, preserved for parity
+            else:
+                # non-schema (free-form)
+                info.set_schema(mode="off")
+                info._is_schema_level = False
+
+            items.append(info)
+
         return cls(info=items)
 
-    # --- snapshot helpers (place inside InfoCollection) ---
+    @classmethod
+    def _deserialize(
+            cls,
+            source: str,
+            *,
+            schema_keys: Iterable[str] | None = None,
+    ) -> InfoCollection:
+        """
+        Recreate an InfoCollection from JSON produced by `_serialize`
+        (non-attribute variant).
+        """
+        content = json.loads(source)
+        return cls.from_dict(content, schema_keys=schema_keys)
+
+    # --- helpers
 
     def _to_info_collection_snapshot(self) -> dict[str, dict]:
         """
@@ -467,7 +541,8 @@ class InfoCollection:
     @classmethod
     def _from_info_collection_snapshot(
             cls,
-            snapshot: dict[str, dict]) -> InfoCollection:
+            snapshot: dict[str, dict],
+    ) -> InfoCollection:
         """
         Inverse of `_to_info_collection_snapshot`.
         Rebuilds Info objects and restores their attributes as saved.
@@ -499,7 +574,10 @@ class InfoCollection:
         return json.dumps(snap, sort_keys=True, separators=(",", ":"))
 
     @classmethod
-    def _deserialize_info_collection_snapshot(cls, source: str) -> "InfoCollection":
+    def _deserialize_info_collection_snapshot(
+            cls,
+            source: str,
+    ) -> InfoCollection:
         """
         Inverse of `_serialize_info_collection_snapshot`.
         """

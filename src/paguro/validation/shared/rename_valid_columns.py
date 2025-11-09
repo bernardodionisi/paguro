@@ -9,13 +9,14 @@ if TYPE_CHECKING:
 
 MappingOrFunc = Union[Mapping[str, str], Callable[[str], str]]
 
+
 def rename_valid_columns(
-    validation: Validation | None,
-    mapping: MappingOrFunc,
-    *,
-    include_transformed_frames: bool = False,
-    include_fields: bool = False,
-) -> Validation | None:
+        validation: Validation,
+        mapping: MappingOrFunc,
+        *,
+        include_transformed_frames: bool = False,
+        include_fields: bool = False,
+) -> Validation:
     """
     In-place rename of ValidColumn._name (strings only) while traversing the graph.
 
@@ -24,8 +25,6 @@ def rename_valid_columns(
     - Callable[[str], str]: called for every string name; returning the same
       name means "no change".
     """
-    if validation is None:
-        return None
 
     # Fast-path normalization
     if callable(mapping):
@@ -37,12 +36,13 @@ def rename_valid_columns(
         use_func = False
         map_dict = mapping
     else:
-        raise TypeError("mapping must be a Mapping[str, str] or Callable[[str], str]")
+        msg = "mapping must be a Mapping[str, str] or Callable[[str], str]"
+        raise TypeError(msg)
 
     for v in _iter_validation_dfs(
-        validation,
-        include_transformed_frames=include_transformed_frames,
-        include_fields=include_fields,
+            validation,
+            include_transformed_frames=include_transformed_frames,
+            include_fields=include_fields,
     ):
         vcl = v._valid_column_list
         if not vcl:
@@ -55,11 +55,10 @@ def rename_valid_columns(
 
             # Compute new name
             if use_func:
-                new = map_fn(old)  # type: ignore[misc]
+                new = map_fn(old)
                 if not isinstance(new, str):
-                    raise TypeError(
-                        f"mapping produced non-str for {old!r}: {type(new).__name__}"
-                    )
+                    msg = f"mapping produced non-str for {old!r}: {type(new).__name__}"
+                    raise TypeError(msg)
                 if new == old:
                     continue  # no-op
             else:
@@ -69,19 +68,19 @@ def rename_valid_columns(
                     continue
                 new = map_dict[old]  # type: ignore[index]
                 if not isinstance(new, str):
-                    raise TypeError(
-                        f"mapping produced non-str for {old!r}: {type(new).__name__}"
-                    )
+                    msg = f"mapping produced non-str for {old!r}: {type(new).__name__}"
+                    raise TypeError(msg)
                 if new == old:
                     continue  # no-op
 
             if not getattr(vc, "_allow_rename", False):
-                raise ValueError(f"Cannot rename column {old!r}: _allow_rename is False")
+                msg = f"Cannot rename column {old!r}: _allow_rename is False"
+                raise ValueError(msg)
 
             if new == "":
-                raise ValueError(f"mapping produced empty name for {old!r}")
+                msg = f"mapping produced empty name for {old!r}"
+                raise ValueError(msg)
 
-            # Mutate in place
-            vc._name = new
+            vc._name = new  # in place
 
     return validation

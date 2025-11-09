@@ -52,10 +52,12 @@ def add_title_to_table(
             position=position,
             alignment=alignment,
         )
-
-        return _concatenate_strings(
-            ["\n".join(title_list), "\n".join(table)],
-            num_columns=2
+        # todo: should this be a StStr?
+        return str(
+            _concatenate_strings(
+                ["\n".join(title_list), "\n".join(table)],
+                num_columns=2
+            )
         )
 
     # if isinstance(table, list):

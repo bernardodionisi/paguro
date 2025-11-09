@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import polars as pl
 
-from typing import TYPE_CHECKING, IO
+from typing import TYPE_CHECKING, IO, Literal
 from typing import Any, TypeVar, overload
 
-from paguro.dataset.io.utils import from_metadata_to_paguro
+from polars import CredentialProviderFunction
 
 from paguro.models.vfm import VFrameModel
+from paguro.dataset.dataset import Dataset
+from paguro.dataset.lazydataset import LazyDataset
 
 if TYPE_CHECKING:
-    from paguro.dataset.dataset import Dataset
-    from paguro.dataset.lazydataset import LazyDataset
-    from polars._typing import FileSource
+    from polars._typing import FileSource, ParallelStrategy, SchemaDict
 
     from pathlib import Path
     from io import IOBase
@@ -53,7 +53,12 @@ def read_parquet(
         source: FileSource,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | bool,
+        storage_options: dict[str, Any] | None,
+        credential_provider: (
+                CredentialProviderFunction | Literal['auto'] | None
+        ),
+        retries: int,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -62,8 +67,13 @@ def read_parquet(
 def read_parquet(
         source: FileSource,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | bool,
+        storage_options: dict[str, Any] | None,
+        credential_provider: (
+                CredentialProviderFunction | Literal['auto'] | None
+        ),
+        retries: int,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -72,25 +82,47 @@ def read_parquet(
         source: FileSource,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | bool = False,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: (
+                CredentialProviderFunction | Literal['auto'] | None
+        ) = 'auto',
+        retries: int = 2,
         **kwargs: Any,
 ):
     """
     ..
 
-    Wrapper for Polars `.read_parquet() <https://docs.pola.rs/py-polars/html/reference/api/polars.read_parquet.html>`_
+    Polars `.read_parquet() <https://docs.pola.rs/py-polars/html/reference/api/polars.read_parquet.html>`_
+    with the option to pass a model or read paguro metadata.
 
     Group
     -----
         read_source
     """
     # https://docs.pola.rs/py-polars/html/reference/api/polars.read_parquet.html
-    data = pl.read_parquet(source=source, **kwargs)
+    # https://docs.pola.rs/api/python/dev/reference/api/polars.read_parquet_metadata.html
+
+    data = pl.read_parquet(
+        source=source,
+        storage_options=storage_options,
+        credential_provider=credential_provider,
+        retries=retries,
+        **kwargs
+    )
+
+    _metadata = _read_metadata(
+        source=source,
+        paguro_metadata=paguro_metadata,
+        storage_options=storage_options,
+        credential_provider=credential_provider,
+        retries=retries,
+    )
+
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
-        metadata=paguro_metadata,
+        metadata=_metadata,
     )
     return dataset
 
@@ -100,7 +132,12 @@ def scan_parquet(
         source: FileSource,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | bool,
+        storage_options: dict[str, Any] | None,
+        credential_provider: (
+                CredentialProviderFunction | Literal['auto'] | None
+        ),
+        retries: int,
         **kwargs: Any,
 ) -> LazyDataset[M]: ...
 
@@ -109,8 +146,13 @@ def scan_parquet(
 def scan_parquet(
         source: FileSource,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | bool,
+        storage_options: dict[str, Any] | None,
+        credential_provider: (
+                CredentialProviderFunction | Literal['auto'] | None
+        ),
+        retries: int,
         **kwargs: Any,
 ) -> LazyDataset[Any]: ...
 
@@ -119,27 +161,78 @@ def scan_parquet(
         source: FileSource,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | bool = False,
+        storage_options: dict[str, Any] | None = None,
+        credential_provider: (
+                CredentialProviderFunction | Literal['auto'] | None
+        ) = 'auto',
+        retries: int = 2,
         **kwargs: Any,
 ):
     """
     ..
 
-    Wrapper for Polars `.scan_parquet() <https://docs.pola.rs/py-polars/html/reference/api/polars.scan_parquet.html>`_
+    Polars `.scan_parquet() <https://docs.pola.rs/py-polars/html/reference/api/polars.scan_parquet.html>`_
+    with the option to pass a model or read paguro metadata.
 
     Group
     -----
         scan_source
     """
     # https://docs.pola.rs/py-polars/html/reference/api/polars.scan_parquet.html
-    data = pl.scan_parquet(source=source, **kwargs)
+    # https://docs.pola.rs/api/python/dev/reference/api/polars.read_parquet_metadata.html
+    data = pl.scan_parquet(
+        source=source,
+        storage_options=storage_options,
+        credential_provider=credential_provider,
+        retries=retries,
+        **kwargs,
+    )
+    _metadata = _read_metadata(
+        source=source,
+        paguro_metadata=paguro_metadata,
+        storage_options=storage_options,
+        credential_provider=credential_provider,
+        retries=retries,
+    )
     dataset = _from_metadata_to_paguro_lazy(
         data=data,
-        source=source,
         model=model,
-        metadata=paguro_metadata,
+        metadata=_metadata,
     )
     return dataset
+
+
+def _read_metadata(
+        source: FileSource,
+        *,
+        paguro_metadata: dict[str, str] | bool,
+        storage_options: dict[str, Any] | None,
+        credential_provider: (
+                CredentialProviderFunction | Literal['auto'] | None
+        ),
+        retries: int,
+) -> dict[str, str] | None:
+    _metadata: dict[str, str] | None = None
+    if isinstance(paguro_metadata, bool):
+        if paguro_metadata:
+
+            try:
+                _metadata = pl.read_parquet_metadata(
+                    source=source,  # type: ignore[arg-type]
+                    storage_options=storage_options,
+                    credential_provider=credential_provider,
+                    retries=retries,
+                )
+            except Exception as e:
+                raise type(e)(
+                    "Unable to read the parquet metadata, "
+                    "try calling polars.read_parquet_metadata and passing "
+                    "the metadata directly.") from e
+    else:
+        _metadata = paguro_metadata
+
+    return _metadata
 
 
 # ---------------------------- ipc -------------------------------------
@@ -152,7 +245,7 @@ def read_ipc(
         ),
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -164,8 +257,8 @@ def read_ipc(
 
         ),
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -176,7 +269,7 @@ def read_ipc(
         ),
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -192,7 +285,6 @@ def read_ipc(
     data = pl.read_ipc(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -208,7 +300,7 @@ def scan_ipc(
         ),
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[M]: ...
 
@@ -221,8 +313,8 @@ def scan_ipc(
                 list[bytes]
         ),
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[Any]: ...
 
@@ -235,7 +327,7 @@ def scan_ipc(
         ),
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -251,7 +343,6 @@ def scan_ipc(
     data = pl.scan_ipc(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_lazy(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -265,7 +356,7 @@ def read_csv(
         source: str | Path | IO[str] | IO[bytes] | bytes,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -274,8 +365,8 @@ def read_csv(
 def read_csv(
         source: str | Path | IO[str] | IO[bytes] | bytes,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -284,7 +375,7 @@ def read_csv(
         source: str | Path | IO[str] | IO[bytes] | bytes,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -301,7 +392,6 @@ def read_csv(
 
     dataset: Dataset[Any] = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -316,8 +406,8 @@ def scan_csv(
         source: (str | Path | IO[str] | IO[bytes] | bytes | list[str] | list[Path] |
                  list[IO[str]] | list[IO[bytes]] | list[bytes]),
         *,
-        model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: type[VFrameModel],
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[M]: ...
 
@@ -327,8 +417,8 @@ def scan_csv(
         source: (str | Path | IO[str] | IO[bytes] | bytes | list[str] | list[Path] |
                  list[IO[str]] | list[IO[bytes]] | list[bytes]),
         *,
-        model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[Any]: ...
 
@@ -338,7 +428,7 @@ def scan_csv(
                  list[IO[str]] | list[IO[bytes]] | list[bytes]),
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -354,7 +444,6 @@ def scan_csv(
     data = pl.scan_csv(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_lazy(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -369,7 +458,7 @@ def read_avro(
         source: str | Path | IO[bytes] | bytes,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -379,7 +468,7 @@ def read_avro(
         source: str | Path | IO[bytes] | bytes,
         *,
         model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -388,7 +477,7 @@ def read_avro(
         source: str | Path | IO[bytes] | bytes,
         *,
         model: type[M] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -404,7 +493,6 @@ def read_avro(
     data = pl.read_avro(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata
     )
@@ -420,7 +508,7 @@ def read_database_uri(
         query: str,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -429,8 +517,8 @@ def read_database_uri(
 def read_database_uri(
         query: str,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -439,7 +527,7 @@ def read_database_uri(
         query: str,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -454,7 +542,6 @@ def read_database_uri(
     data = pl.read_database_uri(query=query, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=query,
         model=model,
         metadata=paguro_metadata
     )
@@ -470,7 +557,7 @@ def read_delta(
         source: str | Path | DeltaTable,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -479,8 +566,8 @@ def read_delta(
 def read_delta(
         source: str | Path | DeltaTable,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -489,7 +576,7 @@ def read_delta(
         source: str | Path | DeltaTable,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ) -> Dataset:
     """
@@ -504,7 +591,6 @@ def read_delta(
     data = pl.read_delta(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -518,7 +604,7 @@ def scan_delta(
         source: str | Path | DeltaTable,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[M]: ...
 
@@ -527,8 +613,8 @@ def scan_delta(
 def scan_delta(
         source: str | Path | DeltaTable,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[Any]: ...
 
@@ -537,7 +623,7 @@ def scan_delta(
         source: str | Path | DeltaTable,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -553,7 +639,6 @@ def scan_delta(
     data = pl.scan_delta(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_lazy(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata
     )
@@ -567,7 +652,7 @@ def read_excel(
         source: FileSource,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -576,8 +661,8 @@ def read_excel(
 def read_excel(
         source: FileSource,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -586,7 +671,7 @@ def read_excel(
         source: FileSource,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -602,7 +687,6 @@ def read_excel(
     data = pl.read_excel(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -617,7 +701,7 @@ def read_json(
         source: str | Path | IOBase | bytes,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -626,8 +710,8 @@ def read_json(
 def read_json(
         source: str | Path | IOBase | bytes,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -636,7 +720,7 @@ def read_json(
         source: (str | Path | IOBase | bytes),
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -652,7 +736,6 @@ def read_json(
     data = pl.read_json(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -667,7 +750,7 @@ def read_ndjson(
                  list[IO[str]] | list[IO[bytes]]),
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -677,8 +760,8 @@ def read_ndjson(
         source: (str | Path | IO[str] | IO[bytes] | bytes | list[str] | list[Path] |
                  list[IO[str]] | list[IO[bytes]]),
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -689,7 +772,7 @@ def read_ndjson(
                 list[IO[str]] | list[IO[bytes]]),
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -706,7 +789,6 @@ def read_ndjson(
     data = pl.read_ndjson(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -721,7 +803,7 @@ def scan_ndjson(
                  list[IO[str]] | list[IO[bytes]]),
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[M]: ...
 
@@ -731,8 +813,8 @@ def scan_ndjson(
         source: (str | Path | IO[str] | IO[bytes] | bytes | list[str] | list[Path] |
                  list[IO[str]] | list[IO[bytes]]),
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[Any]: ...
 
@@ -743,7 +825,7 @@ def scan_ndjson(
                 list[IO[str]] | list[IO[bytes]]),
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ) -> LazyDataset:
     """
@@ -759,7 +841,6 @@ def scan_ndjson(
     data = pl.scan_ndjson(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_lazy(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -774,7 +855,7 @@ def read_ods(
         source: FileSource,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[M]: ...
 
@@ -783,8 +864,8 @@ def read_ods(
 def read_ods(
         source: FileSource,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> Dataset[Any]: ...
 
@@ -793,7 +874,7 @@ def read_ods(
         source: FileSource,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -809,7 +890,6 @@ def read_ods(
     data = pl.read_ods(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_eager(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -823,7 +903,7 @@ def scan_iceberg(
         source: str | Table,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[M]: ...
 
@@ -832,8 +912,8 @@ def scan_iceberg(
 def scan_iceberg(
         source: str | Table,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[Any]: ...
 
@@ -842,7 +922,7 @@ def scan_iceberg(
         source: str | Table,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -858,7 +938,6 @@ def scan_iceberg(
     data = pl.scan_iceberg(source=source, **kwargs)
     dataset = _from_metadata_to_paguro_lazy(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -873,7 +952,7 @@ def scan_pyarrow_dataset(
         source: pa.dataset.Dataset,
         *,
         model: type[M],
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[M]: ...
 
@@ -882,8 +961,8 @@ def scan_pyarrow_dataset(
 def scan_pyarrow_dataset(
         source: pa.dataset.Dataset,
         *,
-        model: None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        model: None,
+        paguro_metadata: dict[str, str] | None,
         **kwargs: Any,
 ) -> LazyDataset[Any]: ...
 
@@ -892,7 +971,7 @@ def scan_pyarrow_dataset(
         source: pa.dataset.Dataset,
         *,
         model: type[VFrameModel] | None = None,
-        paguro_metadata: dict[str, Any] | None = None,
+        paguro_metadata: dict[str, str] | None = None,
         **kwargs: Any,
 ):
     """
@@ -908,7 +987,6 @@ def scan_pyarrow_dataset(
     data = pl.scan_pyarrow_dataset(source, **kwargs)
     dataset = _from_metadata_to_paguro_lazy(
         data=data,
-        source=source,
         model=model,
         metadata=paguro_metadata,
     )
@@ -917,14 +995,12 @@ def scan_pyarrow_dataset(
 
 # ----------------------------------------------------------------------
 
-
 @overload
 def _from_metadata_to_paguro_eager(
         data: pl.DataFrame,
         *,
-        source: Any,
         model: type[M],
-        metadata: dict[str, Any] | None,
+        metadata: dict[str, str] | None,
 ) -> Dataset[M]: ...
 
 
@@ -932,28 +1008,27 @@ def _from_metadata_to_paguro_eager(
 def _from_metadata_to_paguro_eager(
         data: pl.DataFrame,
         *,
-        source: Any,
         model: None,
-        metadata: dict[str, Any] | None,
+        metadata: dict[str, str] | None,
 ) -> Dataset[Any]: ...
 
 
 def _from_metadata_to_paguro_eager(
         data: pl.DataFrame,
         *,
-        source: Any,
         model: type[M] | None,
-        metadata: dict[str, Any] | None,
+        metadata: dict[str, str] | None,
 ):
-    dataset = from_metadata_to_paguro(
-        data=data, source=source, metadata=metadata,
-        class_must_be="Dataset", default_class="Dataset",
+    ds: Dataset = Dataset._from_paguro_metadata_dict(  # type:ignore[return-type]
+        frame=data,
+        paguro_metadata=metadata,
     )
+
     if model is not None:
         # Callers who passed a concrete model match the first overload,
         # so they *see* Dataset[T] at the call site.
-        return dataset._with_model(model=model)
-    return dataset
+        return ds.with_model(model=model)
+    return ds
 
 
 # ----------------------------------------------------------------------
@@ -963,9 +1038,8 @@ def _from_metadata_to_paguro_eager(
 def _from_metadata_to_paguro_lazy(
         data: pl.LazyFrame,
         *,
-        source: Any,
         model: type[M],
-        metadata: dict[str, Any] | None,
+        metadata: dict[str, str] | None,
 ) -> LazyDataset[M]: ...
 
 
@@ -973,28 +1047,24 @@ def _from_metadata_to_paguro_lazy(
 def _from_metadata_to_paguro_lazy(
         data: pl.LazyFrame,
         *,
-        source: Any,
         model: None,
-        metadata: dict[str, Any] | None,
+        metadata: dict[str, str] | None,
 ) -> LazyDataset[Any]: ...
 
 
 def _from_metadata_to_paguro_lazy(
         data: pl.LazyFrame,
         *,
-        source: Any,
         model: type[M] | None,
-        metadata: dict[str, Any] | None,
+        metadata: dict[str, str] | None,
 ):
-    lazydataset = from_metadata_to_paguro(
-        data=data,
-        source=source,
-        metadata=metadata,
-        class_must_be="LazyDataset",
-        default_class="LazyDataset",
+    ds: LazyDataset = LazyDataset._from_paguro_metadata_dict(
+        # type:ignore[return-type]
+        frame=data,
+        paguro_metadata=metadata,
     )
     if model is not None:
         # Callers who passed a concrete model match the first overload,
         # so they *see* Dataset[T] at the call site.
-        return lazydataset._with_model(model=model)
-    return lazydataset
+        return ds.with_model(model=model)
+    return ds

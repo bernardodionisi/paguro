@@ -33,7 +33,7 @@ class LazyCollection(_Collection[LazyDataset], _LazyDatasetMixin):  # type: igno
     def __getitem__(self, key: str) -> LazyDataset:
         return self._data[key]
 
-    def collect(
+    def collect(  # type: ignore[override]
             self,
             **kwargs: Any,
     ) -> Collection:
@@ -82,7 +82,6 @@ class LazyCollection(_Collection[LazyDataset], _LazyDatasetMixin):  # type: igno
 
         from paguro.collection.collection import Collection
         return Collection._from_object(base_object=self, data=out_data)  # type: ignore
-
 
 
 def preprocess_data(data: Mapping) -> dict[str, LazyDataset]:

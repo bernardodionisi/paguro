@@ -59,7 +59,7 @@ class CustomJSONDecoder(json.JSONDecoder):
                 return import_lfe_dict(cls=LazyFrameExpr, d=v)
 
             case "dec":
-                return decimal.ValidDecimal(v)
+                return decimal.Decimal(v)
 
             case "dt":
                 return datetime.datetime.fromisoformat(v)

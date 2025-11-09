@@ -35,7 +35,7 @@ from paguro import exceptions
 from paguro.defer import deferred
 from paguro.shared.functions import collect_all, concat
 
-from paguro.dataset.io._read_source import (
+from paguro.dataset.io.read_source import (
     read_parquet,
     scan_parquet,
     read_ipc,
@@ -63,7 +63,6 @@ __all__ = [
     "exceptions",
 
     # deferred pipeline
-    "LazyFrameExpr",
     "defer",
 
     # structures
@@ -107,5 +106,4 @@ __all__ = [
     "scan_ndjson",
     "scan_iceberg",
     "scan_pyarrow_dataset",
-
 ]

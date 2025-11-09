@@ -51,18 +51,17 @@
 
 document.addEventListener("DOMContentLoaded", function () {
     const internalLinks = {
-        "ValidationMode": "paguro.typing.ValidationMode.html",
-        "Validators": "paguro.typing.Validators.html",
-        "ValidatorOrExpr": "paguro.typing.ValidatorOrExpr.html",
-        "IntoValidators": "paguro.typing.IntoValidators.html",
-        "IntoValidation": "paguro.typing.IntoValidation.html",
-        "FieldsValidators": "paguro.typing.FieldsValidators.html",
-        "IntoKeepColumns": "paguro.typing.IntoKeepColumns.html",
-        "OnSuccess": "paguro.typing.OnSuccess.html",
-        "OnFailure": "paguro.typing.OnFailure.html",
-        "OnFailureExtra": "paguro.typing.OnFailureExtra.html",
-        "FrameLike": "paguro.typing.FrameLike.html",
-
+        "ValidationMode": "paguro.typing.ValidationMode",
+        "Validators": "paguro.typing.Validators",
+        "ValidatorOrExpr": "paguro.typing.ValidatorOrExpr",
+        "IntoValidators": "paguro.typing.IntoValidators",
+        "IntoValidation": "paguro.typing.IntoValidation",
+        "FieldsValidators": "paguro.typing.FieldsValidators",
+        "IntoKeepColumns": "paguro.typing.IntoKeepColumns",
+        "OnSuccess": "paguro.typing.OnSuccess",
+        "OnFailure": "paguro.typing.OnFailure",
+        "OnFailureExtra": "paguro.typing.OnFailureExtra",
+        "FrameLike": "paguro.typing.FrameLike",
     };
 
     const externalLinks = {
@@ -77,8 +76,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "polars.selectors.Selector": "https://docs.pola.rs/api/python/stable/reference/selectors.html",
     };
 
+    const docsRoot = "/paguro/latest/api/"; // <-- Base path for internal docs
+
     document.querySelectorAll(".sig-param .pre, .sig-return .pre").forEach(function (el) {
-        // don’t rewrap if it’s already inside a link
         if (el.closest("a")) return;
 
         const txt = el.textContent.trim();
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let classes = [];
 
         if (Object.prototype.hasOwnProperty.call(internalLinks, txt)) {
-            href = internalLinks[txt];
+            href = docsRoot + internalLinks[txt] + "/";
             classes = ["reference", "internal"];
         } else if (Object.prototype.hasOwnProperty.call(externalLinks, txt)) {
             href = externalLinks[txt];
@@ -95,18 +95,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (!href) return;
 
-        // Build the anchor and wrap the existing `.pre` node
         const a = document.createElement("a");
         a.href = href;
         a.classList.add(...classes);
+
         if (classes.includes("external")) {
             a.target = "_blank";
             a.rel = "noopener noreferrer";
         }
 
-        // Wrap (preserves the `.pre` element and its styling)
         el.replaceWith(a);
         a.appendChild(el);
     });
 });
-

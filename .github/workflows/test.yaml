@@ -29,7 +29,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
 
       - name: Install test dependencies
-        run: uv pip install --system -e ".[test]"
+        run: uv pip install --system -e ".[extra, test]"
 
       - name: Install the `paguro` package (editable)
         run: uv pip install --system -e .

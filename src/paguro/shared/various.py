@@ -75,7 +75,7 @@ def _columns_where_ellipsis(
 
 
 def write_text_to_svg(
-        path: str | pathlib.Path,
+        path: str | pathlib.Path | None,
         *,
         text: str,
         width: int,

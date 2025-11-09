@@ -22,6 +22,9 @@ def set_doc_string(
         else:
             this_doc = doc
 
+        if this_doc is None:
+            return func
+
         if parameters is not None:
             func.__doc__ = (
                 this_doc

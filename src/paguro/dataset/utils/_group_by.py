@@ -68,8 +68,9 @@ class _GroupBy(Generic[_D]):
                         #         self._dataset._info
                         #         ._sync_schema(columns=result.columns)
                         #     )
-
-                        return self._dataset._from_instance(frame=result)
+                        return self._dataset._from_instance(
+                            frame=result  # type: ignore[arg-type]
+                        )
                     else:
                         return result  # non dataframe output
 

@@ -200,13 +200,14 @@ def ensure_nested_keys_are_identifiers(schema: Mapping[str, Any]) -> None:
         for k, v in tree.items():
             if _is_nested_mapping(v):
                 if not _is_valid_identifier(k):
-                    bad.append(".".join(path + [k]) or k)
-                walk(v, path + [k])
+                    bad.append(".".join([*path, k]))
+                walk(v, [*path, k])
 
     walk(schema, [])
+
     if bad:
-        seen: set[str] = set()
-        uniq = [x for x in bad if not (x in seen or seen.add(x))]
+        # Order-preserving dedupe without side effects in expressions
+        uniq: list[str] = list(dict.fromkeys(bad))
         raise ValueError(
             "Invalid identifiers: Struct column name must be a valid Python identifier. "
             + ", ".join(uniq)

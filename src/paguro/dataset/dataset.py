@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Generic
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Generic, IO
 
 import polars as pl
 from collections.abc import Sequence
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from polars import DataFrame
     from polars._typing import (
         FrameInitTypes,
-        IntoExpr,
+        IntoExpr, ClosedInterval,
     )
 
     from polars._plr import Label
@@ -121,124 +121,49 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
 
         See Also
         --------
-        :class:`paguro.LazyDataset`
+
+            :class:`paguro.LazyDataset`
         """
         if not isinstance(data, (pl.DataFrame, _Dataset)):
             data = pl.DataFrame(data, **kwargs)
 
         super().__init__(data=data, name=name, **kwargs)
 
-        self._model: VFM | None = None
-
-    # def with_model(
-    #         self,
-    #         model: type[U],
-    #         *,
-    #         overwrite: bool = False,
-    # ) -> Dataset[U]:
-    #     # technically this should be defined wither in
-    #     if self._model is not None:
-    #         raise ValueError(
-    #             "Model has already been set. Set overwrite=True to replace it.")
-    #     if self._validation is not None:
-    #         raise ValueError(
-    #             "Validation has already been set. Set overwrite=True to replace it."
-    #         )
-    #
-    #     validation = model._to_validation()
-    #
-    #     validation.validate(
-    #         data=self._data,
-    #         mode="all",
-    #         collect=True,
-    #         on_success="return_none",
-    #         on_failure="raise",
-    #     )
-    #
-    #     new = copy.deepcopy(self)
-    #     new._model = model
-    #     new._validation = validation
-    #
-    #     return new  # type: ignore
-
-    # ------------------------------------------------------------------
-
-    def to_polars(self) -> pl.DataFrame:
-        return self.to_dataframe()
+        self._model: VFM | None = None  # type: ignore[assignment]
 
     # --------------------------- IO -----------------------------------
 
-    def _write_parquet(
+    def write_parquet(
             self,
-            file: str | Path,
+            file: str | Path | IO[bytes],
             *,
-            write_paguro_metadata: bool | str | Path = True,
-            using_pyarrow: bool = False,
-            **write_kwargs: Any,
+            write_paguro_metadata: bool = True,
+            **kwargs: Any,
     ) -> None:
         """
         Write parquet.
 
         Group
         -----
-            Overridden
+            Adapted
         """
-        json_encoder = CustomJSONEncoder
 
-        metadata = None
-        if write_paguro_metadata:
-            if using_pyarrow:
-                encode = isinstance(write_paguro_metadata, bool)
-                # is write_metadata is string/Path -> json
-                metadata = self._get_paguro_metadata(
-                    encode=encode, json_encoder=json_encoder
-                )
-            else:
-                metadata = self._get_paguro_metadata(
-                    encode="as_dict", json_encoder=json_encoder
-                )
-                # metadata = encode_json_values(json_str=metadata, cls=json_decoder)
-
-        _write_parquet(
-            data=self._data,
-            _file_path=file,
-            _metadata=metadata,
-            _write_metadata=write_paguro_metadata,
-            _using_pyarrow=using_pyarrow,
-            **write_kwargs,
+        metadata = self._metadata_for_polars_parquet(
+            write_paguro_metadata=write_paguro_metadata,
+            kwargs=kwargs,
         )
 
-    def _write_ipc(
-            self,
-            file: str | Path,
-            *,
-            write_metadata: bool | str | Path = True,
-            **write_kwargs: Any,
-    ) -> None:
-        """
-        Write ipc.
-
-        Group
-        -----
-            Overridden
-        """
-        metadata = (
-            # is write__metadata is string/Path -> json
-            self._get_paguro_metadata(
-                encode=isinstance(write_metadata, bool),
-                json_encoder=CustomJSONEncoder,
+        if metadata:
+            self._getattr("write_parquet")(
+                file=file,
+                metadata=metadata,
+                **kwargs,
             )
-            if write_metadata
-            else None
-        )
-
-        _write_ipc(
-            data=self._data,
-            _file_path=file,
-            _metadata=metadata,
-            _write_metadata=write_metadata,
-            **write_kwargs,
-        )
+        else:
+            self._getattr("write_parquet")(
+                file=file,
+                **kwargs
+            )
 
     def _write_repr_svg(
             self,
@@ -258,6 +183,9 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
             line_height=line_height,
 
         )
+
+    def to_polars(self) -> pl.DataFrame:
+        return self.to_dataframe()
 
     # -------------------------- polars ---------------------------------
 
@@ -377,7 +305,7 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
             raise TypeError("other must be a Dataset or polars.DataFrame")
 
         return super()._join(
-            other=other,
+            other=other,  # type: ignore[arg-type]
             on=on,
             how=how,
             left_on=left_on,
@@ -419,7 +347,7 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
             raise TypeError("other must be a Dataset or polars.DataFrame")
 
         return super()._join_asof(
-            other=other,
+            other=other,  # type: ignore[arg-type]
             left_on=left_on,
             right_on=right_on,
             on=on,
@@ -453,7 +381,7 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
             raise TypeError("other must be a Dataset or polars.DataFrame")
 
         return super()._join_where(
-            other,
+            other,  # type: ignore[arg-type]
             *predicates,
             suffix=suffix,
         )
@@ -474,7 +402,7 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
             raise TypeError("other must be a Dataset or polars.DataFrame")
 
         return super()._merge_sorted(
-            other=other,
+            other=other,  # type: ignore[arg-type]
             key=key,
         )
 
@@ -494,7 +422,7 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
         if not isinstance(other, (Dataset, pl.DataFrame)):
             raise TypeError("other must be a Dataset or polars.DataFrame")
         return super()._vstack(
-            other=other,
+            other=other,  # type: ignore[arg-type]
             in_place=in_place,
         )
 
@@ -556,7 +484,10 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
         -----
             Model
         """
-        return super()._with_model(model=model, overwrite=overwrite)
+        return super()._with_model(  # type: ignore [return-value]
+            model=model,
+            overwrite=overwrite,
+        )
 
     def without_model(
             self,
@@ -569,15 +500,6 @@ class Dataset(_Dataset[pl.DataFrame], _DataFrame, Generic[VFM]):
             Model
         """
         return super()._without_model()  # type: ignore
-
-    # @classmethod
-    # def _from_obj(
-    #         cls,
-    #         base_object: Dataset[U] | LazyDataset[U],
-    #         *,
-    #         frame: _T,
-    # ) -> Dataset[U]:
-    #     ... define here for typing
 
     def with_validation(
             self,

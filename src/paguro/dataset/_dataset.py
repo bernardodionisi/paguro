@@ -24,8 +24,7 @@ from paguro.validation.validation import Validation
 from paguro.models.vfm import VFrameModel
 from paguro.eda.print_schema import print_schema
 from paguro.dataset.io.metadata.metadata import (
-    to_paguro_dataset_metadata_serialized_key_value,
-    _from_paguro_dataset_metadata_to_attrs
+    to_paguro_dataset_metadata_serialized_key_value, _deserialize_paguro_metadata
 )
 
 from paguro.models.vfm._blueprint import collect_model_blueprint
@@ -295,8 +294,8 @@ class _Dataset(Generic[_FrameT]):
                             if this_validation is not None:
                                 # data returned from validation
                                 # should always be "consistent" with input
+                                collect_: _CollectConfig | bool = True
                                 limit_ = os.environ.get("PAGURO_AUTO_VALIDATION_LIMIT")
-                                collect_ = True
                                 if limit_ is not None:
                                     collect_ = _CollectConfig(
                                         limit=int(limit_),
@@ -443,14 +442,15 @@ class _Dataset(Generic[_FrameT]):
             model: type[VFrameModel],
             *,
             overwrite: bool = False,
-    ) -> LazyDataset | Dataset:
-        # technically this should be defined wither in
-        if self._model is not None:
+    ) -> Self:
+        if self._model is not None and not overwrite:
             raise ValueError(
-                "Model has already been set. Set overwrite=True to replace it.")
-        if self._validation is not None:
+                "Model has already been set. "
+                "Set overwrite=True to replace it.")
+        if self._validation is not None and not overwrite:
             raise ValueError(
-                "Validation has already been set. Set overwrite=True to replace it."
+                "Validation has already been set. "
+                "Set overwrite=True to replace it."
             )
 
         model._valid_frame.validate(
@@ -466,7 +466,7 @@ class _Dataset(Generic[_FrameT]):
         new._model = model
         new._validation = Validation(copy.deepcopy(model._valid_frame))
 
-        return new  # type: ignore
+        return new  # type: ignore[return-type]
 
     def _without_model(
             self,
@@ -482,7 +482,7 @@ class _Dataset(Generic[_FrameT]):
             name: str | None = "DatasetModel",
             dtypes: bool | Literal["as_values"] = False,
             allow_nulls: bool | None = None,
-    ) -> str:
+    ) -> str | None:
         """
         Generate a blueptrint for a model of the datased based on VFrameModel.
 
@@ -559,7 +559,8 @@ class _Dataset(Generic[_FrameT]):
         if self._validation is not None:
             if not overwrite:
                 raise ValueError(
-                    "Validation has already been set; set overwrite=True to replace it."
+                    "Validation has already been set; "
+                    "set overwrite=True to replace it."
                 )
         return self._with_validation_replace(validation)
 
@@ -574,7 +575,7 @@ class _Dataset(Generic[_FrameT]):
                 f"In order to replace the validation attribute you "
                 f"must remove the model from the {self.__class__.__qualname__} using "
                 f"{self.__class__.__qualname__}.without_model()."
-                f"Alternativly to validate the data without "
+                f"Alternatively to validate the data without "
                 f"setting the attribute validation "
                 f"you can call {self.__class__.__qualname__}.validate()."
             )
@@ -675,15 +676,42 @@ class _Dataset(Generic[_FrameT]):
             on_failure=on_failure,
             cast=cast,
         )
-        return out
+
+        # validate returns the same type as the input data
+        return out  # type: ignore[return-value]
 
     # ------------------------- metadata -------------------------------
 
-    def _attrs_to_paguro_metadata(
+    def _metadata_for_polars_parquet(
+            self,
+            write_paguro_metadata: bool,
+            kwargs: dict[str, Any],
+    ) -> dict[str, str]:
+        user_metadata = kwargs.get("metadata", {})
+        if write_paguro_metadata:
+            paguro_metadata = self._get_serialized_paguro_metadata_dict(
+                use_pyarrow_format=False
+            )
+            if paguro_metadata is not None:
+                if "paguro" in user_metadata:
+                    raise ValueError(
+                        "'paguro' is a reserved keyword for paguro metadata"
+                    )
+                user_metadata.update(**paguro_metadata)
+        return user_metadata
+
+    def _get_serialized_paguro_metadata_dict(
             self,
             *,
             use_pyarrow_format: bool,
-    ) -> dict[str, str] | dict[bytes, bytes]:
+    ) -> dict[str, str] | dict[bytes, bytes] | None:
+
+        if (
+                self._validation is None
+                and self._info is None
+                and self._name is None
+        ):
+            return None
 
         validation: str | None = None
         if self._validation is not None:
@@ -691,7 +719,7 @@ class _Dataset(Generic[_FrameT]):
 
         info: str | None = None
         if self._info is not None:
-            info = self._info.serialize()  # todo with info attrs
+            info = self._info._serialize()
 
         attrs = dict(
             name=self._name,
@@ -699,38 +727,32 @@ class _Dataset(Generic[_FrameT]):
             info=info,
         )
         return to_paguro_dataset_metadata_serialized_key_value(
-            class_name=self.__class__.__name__,
+            class_name=self.__class__.__name__,  # type: ignore[arg-type]
             attrs=attrs,
             use_pyarrow_format=use_pyarrow_format,
             json_encoder=None,
         )
 
     @classmethod
-    def _from_paguro_metadata(
+    def _from_paguro_metadata_dict(
             cls,
             frame: _FrameT,
-            paguro_metadata: dict[str, str],  # | dict[bytes, bytes]
+            paguro_metadata: dict[str, str] | None,  # | dict[bytes, bytes]
     ) -> Self:
-        # validation and info still need deserialization
-        attrs: dict[str, Any] = _from_paguro_dataset_metadata_to_attrs(
-            source=paguro_metadata,
-            json_decoder=None,
+
+        if paguro_metadata is None:
+            return cls(data=frame)
+
+        deserializes_meta = _deserialize_paguro_metadata(
+            paguro_metadata=paguro_metadata,
+            _schema_keys_for_info=frame.collect_schema().names()
         )
-        name = attrs.pop("name")
-        validation = attrs.pop("validation", None)
-        if validation is not None:
-            validation = Validation.deserialize(validation)
-
-        info = attrs.pop("info")
-        if info is not None:
-            info = InfoCollection.deserialize(info)  # todo: with attributes
-
         out = cls(
             data=frame,
-            name=name,
+            name=deserializes_meta.get("name"),
         )
-        out._validation = validation
-        out._info = info
+        out._validation = deserializes_meta.get("validation")
+        out._info = deserializes_meta.get("info")
         return out
 
     # ------------------------- descriptives ---------------------------
@@ -822,10 +844,8 @@ class _Dataset(Generic[_FrameT]):
         # rename is defined for renaming metadata
 
         validation: Validation | None = None
-
         if self._validation is not None:
-            validation = copy.deepcopy(self._validation)
-            validation = validation._rename_valid_columns(mapping)  # inplace operation
+            validation = self._validation._rename_valid_columns(mapping)
 
         new = copy.deepcopy(self)
 
@@ -903,7 +923,7 @@ class _Dataset(Generic[_FrameT]):
 
     def _join(
             self,
-            other: Self | pl.DataFrame | pl.LazyFrame,
+            other: Self | _FrameT,
             on: str | pl.Expr | Sequence[str | pl.Expr] | None = None,
             how: JoinStrategy = 'inner',
             **kwargs: Any,
@@ -963,7 +983,7 @@ class _Dataset(Generic[_FrameT]):
 
     def _join_asof(
             self,
-            other: Self | DataFrame | LazyFrame,
+            other: Self | _FrameT,
             **kwargs,
     ) -> Self:
         other_has_validation = False
@@ -993,7 +1013,7 @@ class _Dataset(Generic[_FrameT]):
 
     def _join_where(
             self,
-            other: Self | DataFrame | LazyFrame,
+            other: Self | _FrameT,
             *args,
             **kwargs,
     ) -> Self:
@@ -1027,7 +1047,7 @@ class _Dataset(Generic[_FrameT]):
 
     def _merge_sorted(
             self,
-            other: Self | DataFrame | LazyFrame,
+            other: Self | _FrameT,
             **kwargs,
     ) -> Self:
         if not isinstance(other, (pl.DataFrame, pl.LazyFrame)):
@@ -1048,7 +1068,7 @@ class _Dataset(Generic[_FrameT]):
 
     def _update(
             self,
-            other: Self | DataFrame | LazyFrame,
+            other: Self | _FrameT,
             **kwargs,
     ) -> Self:
         if not isinstance(other, (pl.DataFrame, pl.LazyFrame)):
@@ -1066,7 +1086,7 @@ class _Dataset(Generic[_FrameT]):
 
     def _vstack(
             self,
-            other: Self | DataFrame | LazyFrame,
+            other: Self | _FrameT,
             **kwargs,
     ) -> Self:
         if not isinstance(other, (pl.DataFrame, pl.LazyFrame)):
@@ -1127,7 +1147,7 @@ def _new_dataset_or_lazydataset(
         frame=frame  # type: ignore[arg-type]
     )  # copying all the attrs from self
 
-    return new
+    return new  # type: ignore[return-value]
 
 
 def _get_auto_mode_repr() -> str:
@@ -1138,5 +1158,5 @@ def _get_auto_mode_repr() -> str:
     return "off"
 
 
-def _get_auto_validation_mode():
-    return os.environ.get("PAGURO_AUTO_VALIDATION_MODE")
+def _get_auto_validation_mode() -> ValidationMode:
+    return os.environ.get("PAGURO_AUTO_VALIDATION_MODE")  # type: ignore[return-value]

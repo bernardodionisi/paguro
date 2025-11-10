@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import warnings
 
-import typing
 from typing import TYPE_CHECKING, Any, Literal
 
 import polars as pl
@@ -41,7 +40,7 @@ from paguro.validation.valid_column.utils.dtype_errors import dtype_errors
 from paguro.validation.valid_column.utils.exprs.predicates import (
     get_allow_nulls_predicate,
     get_unique_predicate,
-    get_struct_expr
+    get_new_root
 )
 
 from paguro.validation.valid_column.utils.exprs.replace_expr import (
@@ -244,12 +243,16 @@ class ValidColumn(_ValidBase):
             if self._root_up is None:
                 return pl.col(self._name)
             else:
-                return get_struct_expr(self._root_up).struct.field(self._name)
+                _root_up = (*self._root_up, self._name)
+                return get_new_root(_root_up)
         else:
             if self._root_up is not None:
-                warnings.warn(
-                    f"Fields parents ignored for column with non string name: {self._name}"
+                msg = (
+                    f"Nested parents have been ignored."
+                    f"Please ensure a string column name to include nested parents: "
+                    f"current name is {type(self._name)}"
                 )
+                warnings.warn(msg)
 
             if self._name is None:
                 return cs.all()
@@ -647,7 +650,10 @@ class ValidColumn(_ValidBase):
         out: typed_dicts.ValidColumnDataErrors = {}
 
         if _root_down:
-            _root_down = (*_root_down, self._name)
+            _root_down = (*_root_down, self._name)  # add last name
+            _new_root: pl.Expr | None = get_new_root(_root_down)
+        else:
+            _new_root = None
 
         if not self._allow_nulls:
             if "allow_nulls" not in out:
@@ -655,16 +661,18 @@ class ValidColumn(_ValidBase):
 
             out["allow_nulls"]["predicate"] = get_allow_nulls_predicate(
                 column_name=self._name,
-                root_down=_root_down,
+                _new_root=_new_root,
             )
 
             if not _has_additional_columns(
-                    keep_columns=keep_columns, with_row_index=with_row_index
+                    keep_columns=keep_columns,
+                    with_row_index=with_row_index,
             ):
                 # if no additional columns requested, then just count the nulls
                 # we would not have other columns to use for filtering anyway
                 out["allow_nulls"]["maybe_errors"] = _null_counts(
-                    data=frame, column_name=self._name
+                    data=frame,
+                    column_name=self._name,
                 )
             else:
                 # if additional columns requested return the same level of observation
@@ -684,7 +692,7 @@ class ValidColumn(_ValidBase):
 
             out["unique"]["predicate"] = get_unique_predicate(
                 column_name=self._name,
-                root_down=_root_down,
+                _new_root=_new_root,
             )
 
             out["unique"]["maybe_errors"] = _get_duplicates(
@@ -716,7 +724,7 @@ class ValidColumn(_ValidBase):
                 attr=attr,
                 keep_columns=keep_columns,
                 with_row_index=with_row_index,
-                _root_down=_root_down,
+                _new_root=_new_root,
                 get_expr=get_expr,
             )
 
@@ -864,7 +872,10 @@ class ValidColumn(_ValidBase):
 
     # ------------------------------------------------------------------
 
-    def gather_predicates(self, target: pl.Schema | None = None) -> list[pl.Expr]:
+    def gather_predicates(
+            self,
+            target: pl.Schema | None = None,
+    ) -> list[pl.Expr]:
         """
         Gather all the set rules as predicate expressions.
 
@@ -972,7 +983,7 @@ class ValidColumn(_ValidBase):
             return {"fields": predicates}
         return {}
 
-    def _gather_focal_predicates(
+    def _gather_focal_predicates(  # corresponds to _gather_data_errors
             self,
             schema: pl.Schema | None,
             *,
@@ -987,7 +998,10 @@ class ValidColumn(_ValidBase):
         out: dict[str, Any] = {}
 
         if _root_down:
-            _root_down = (*_root_down, self._name)
+            _root_down = (*_root_down, self._name)  # add last name
+            _new_root: pl.Expr | None = get_new_root(_root_down)
+        else:
+            _new_root = None
 
         if not self._allow_nulls:
             if "allow_nulls" not in out:
@@ -995,7 +1009,7 @@ class ValidColumn(_ValidBase):
 
             out["allow_nulls"]["predicate"] = get_allow_nulls_predicate(
                 column_name=self._name,
-                root_down=_root_down,
+                _new_root=_new_root,
             )
 
         if self._unique:
@@ -1007,7 +1021,7 @@ class ValidColumn(_ValidBase):
 
             out["unique"]["predicate"] = get_unique_predicate(
                 column_name=self._name,
-                root_down=_root_down,
+                _new_root=_new_root,
             )
 
         if self._constraints:
@@ -1018,7 +1032,7 @@ class ValidColumn(_ValidBase):
                 column_name=self._name,
                 value=value,
                 attr=attr,
-                _root_down=_root_down,
+                _new_root=_new_root,
                 get_expr=get_expr,
             )
 

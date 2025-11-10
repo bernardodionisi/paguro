@@ -6,7 +6,6 @@ import warnings
 
 from typing import TYPE_CHECKING, Any, Callable
 from paguro.validation.valid_column.utils.exprs.json_expr import replace_expression_root
-from paguro.validation.valid_column.utils.exprs.predicates import get_struct_expr
 
 if TYPE_CHECKING:
     from paguro.typing import IntoKeepColumns
@@ -15,15 +14,15 @@ if TYPE_CHECKING:
 def replace_predicate(
         *,
         expr: pl.Expr,
-        root_down: tuple[str, ...],
+        _new_root: pl.Expr,
 ) -> pl.Expr:
     try:
         return replace_expression_root(
             expr=expr,
-            new_root=get_struct_expr(root_down=root_down),
+            _new_root=_new_root,
         )
     except Exception as e:
-        msg = f"unable to determine predicate for {root_down}"
+        msg = f"unable to determine predicate for {_new_root}"
         raise type(e)(msg) from e
 
 
@@ -56,7 +55,7 @@ def replace_expr(
             # but its useful to have it as fully specified predicate
             expr = replace_expression_root(
                 expr=expr,
-                new_root=column_name,
+                _new_root=column_name,
             )
             # TODO: maybe allow replace_expression_root
             #  to a parameter that can be changed from
@@ -94,7 +93,7 @@ def _dispatch_expr_args_for_errors(
         attr: str,
         keep_columns: IntoKeepColumns,
         with_row_index: bool | str,
-        _root_down: tuple[str, ...] | None,
+        _new_root: pl.Expr | None,
         get_expr: Callable,
 ) -> tuple[IntoKeepColumns, bool | str, pl.Expr, pl.Expr]:
     if isinstance(value, pl.Expr):
@@ -104,20 +103,20 @@ def _dispatch_expr_args_for_errors(
             keep_columns=keep_columns,
             with_row_index=with_row_index,
         )
-        if _root_down:
+        if _new_root is not None:
             predicate = replace_predicate(
-                expr=value,
-                root_down=_root_down,
+                expr=value,  # pl.all()
+                _new_root=_new_root,
             )
         else:
             predicate = expr
     else:
         expr = get_expr(attr, value, column_name)
-        if _root_down:
+        if _new_root is not None:
             predicate = get_expr(
                 attr,
                 value,
-                get_struct_expr(root_down=_root_down)
+                _new_root
             )
         else:
             predicate = expr
@@ -130,33 +129,16 @@ def _dispatch_expr_args_for_predicates(
         column_name: str,
         value: Any,
         attr: str,
-        _root_down: tuple[str, ...] | None,
+        _new_root: pl.Expr | None,
         get_expr: Callable,
 ) -> pl.Expr:
-    if isinstance(value, pl.Expr):
-        _, _, expr = replace_expr(
-            expr=value,
-            column_name=column_name,
-            keep_columns=False,
-            with_row_index=False,
-        )
-        if _root_down:
-            # replace_predicate will raise if we are unable to replace root
-            predicate: pl.Expr = replace_predicate(
-                expr=value,
-                root_down=_root_down,
-            )
-        else:
-            predicate = expr
-    else:
-        expr = get_expr(attr, value, column_name)
-        if _root_down:
-            predicate = get_expr(
-                attr,
-                value,
-                get_struct_expr(root_down=_root_down)
-            )
-        else:
-            predicate = expr
-
+    _, _, _, predicate = _dispatch_expr_args_for_errors(
+        column_name=column_name,
+        value=value,
+        attr=attr,
+        keep_columns=False,
+        with_row_index=False,
+        _new_root=_new_root,
+        get_expr=get_expr,
+    )
     return predicate

@@ -10,11 +10,11 @@ from paguro.utils.dependencies import json
 
 def replace_expression_root(
         expr: pl.Expr,
-        new_root: str | pl.Expr,
+        _new_root: str | pl.Expr,
 ) -> pl.Expr:
     json_str = _replace_expression_root(
         expr=expr,
-        new_root=new_root,
+        new_root=_new_root,
     )
     return pl.Expr.deserialize(StringIO(json_str), format="json")
 

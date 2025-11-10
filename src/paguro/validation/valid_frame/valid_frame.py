@@ -214,17 +214,6 @@ class ValidFrame(_ValidBase):
         )
         return new
 
-    # @property
-    # def name(self) -> str | None:  # or Selector
-    #     return self._name
-    #
-    # @name.setter
-    # def name(self, value: str | None) -> None:
-    #     if not isinstance(value, str):
-    #         msg = "name must be of type str"
-    #         raise TypeError(msg)  # TODO: or None, or Selector
-    #     self._name = value
-
     def _find_vcol(
             self,
             name: str | None | Selector,
@@ -492,12 +481,12 @@ class ValidFrame(_ValidBase):
             # TODO: try, except in case root_names fails
             missing = set(expr.meta.root_names()) - set(columns)
             if missing:
-                warnings.warn(
+                msg = (
                     f"\nvframe: {self._name!r}"
                     f"\n\tskipped constraint: {attr!r} ({expr!s}).\n"
-                    f"\t\tColumns: {missing} are not in the schema.",
-                    stacklevel=2,
+                    f"\t\tColumns: {missing} are not in the schema."
                 )
+                warnings.warn(msg, stacklevel=2, )
                 continue
             else:
                 # we encountered a valid constraint
@@ -697,10 +686,12 @@ class ValidFrame(_ValidBase):
             _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         if self._transform is not None:
-            warnings.warn(
+            msg = (
                 f"Skipping predicates of vframe {self._name!r}. "
-                f"Predicates of vframes with transformations can be gathered from ValidationError"
+                f"Predicates of vframes with "
+                f"transformations can be gathered from ValidationError"
             )
+            warnings.warn(msg, stacklevel=2, )
             return {}
 
         out = super()._gather_predicates(
@@ -732,6 +723,16 @@ class ValidFrame(_ValidBase):
         if self._transform is not None:
             return out  # no predicates if transform is set
 
+        if _root_down is not None:
+            msg = (
+                f"Unable to gather predicates for vframe with name: {self._name}\n"
+                f"The valid frame is placed inside a nested path: {_root_down}\n"
+                f"If you want predicate constraints that reflect the nested path "
+                f"you need to write them on root "
+                f"using the relevant expression namespaces"
+            )
+            raise ValueError(msg)  # todo: example
+
         if self._unique is not None:
             # # TODO: check feasibility of unique: link in constraints
             #  if the columns specified in unique are in the collected_schema
@@ -750,20 +751,17 @@ class ValidFrame(_ValidBase):
                 try:
                     missing = set(expr.meta.root_names()) - set(columns)
                 except Exception as e:  # in case root_names fails for some reason
-
-                    warnings.warn(
-                        f"{e}\nUnable to determine the root names of {attr}",
-                        stacklevel=2,
-                    )
+                    msg = f"{e}\nUnable to determine the root names of {attr}"
+                    warnings.warn(msg, stacklevel=2, )
                     missing = set()
 
                 if missing:
-                    warnings.warn(
+                    msg = (
                         f"\nvframe: {self._name!r}"
                         f"\n\tskipped constraint: {attr!r} ({expr!s}).\n"
-                        f"\t\tColumns: {missing} are not in the schema.",
-                        stacklevel=2,
+                        f"\t\tColumns: {missing} are not in the schema."
                     )
+                    warnings.warn(msg, stacklevel=2, )
                     continue
             # we encountered a valid constraint
             if "constraints" not in out:

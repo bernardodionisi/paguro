@@ -438,7 +438,7 @@ class ValidFrame(_ValidBase):
             get_expr: Callable[
                 [str, Any, str | Expr | None], Expr
             ],  # only used for ValidColumn
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidFrameDataErrors:
         out = typed_dicts.ValidFrameDataErrors()
 
@@ -539,7 +539,7 @@ class ValidFrame(_ValidBase):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidFrameValidatorsErrors:
         if self._validators is None:
             return {}
@@ -552,7 +552,7 @@ class ValidFrame(_ValidBase):
             with_row_index=with_row_index,
             get_expr=get_expr,
             cast=cast,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
         if errors:
             return {"validators": errors}
@@ -567,7 +567,7 @@ class ValidFrame(_ValidBase):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidFrameErrors:
         if self._transform is not None:
             frame = self._transform(frame)
@@ -593,7 +593,7 @@ class ValidFrame(_ValidBase):
             with_row_index=with_row_index,
             get_expr=get_expr,  # only used for ValidColumn now
             cast=cast,  # inconsequential here, only passed because ValidColumn
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
 
         if self._validators is not None:
@@ -604,7 +604,7 @@ class ValidFrame(_ValidBase):
                 with_row_index=with_row_index,
                 get_expr=get_expr,
                 cast=cast,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if validators_errors:
                 out.update(validators_errors)
@@ -645,7 +645,7 @@ class ValidFrame(_ValidBase):
             with_row_index=with_row_index,
             get_expr=get_expr,
             cast=cast,
-            _struct_fields=None,
+            _root_down=None,
         )
 
         # self._validate is redefined here just to modify the errors dict
@@ -677,7 +677,7 @@ class ValidFrame(_ValidBase):
         predicates = self._gather_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=None,
+            _root_down=None,
         )
 
         # TODO: check inconsistency on how we store name in validators frames
@@ -694,7 +694,7 @@ class ValidFrame(_ValidBase):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         if self._transform is not None:
             warnings.warn(
@@ -706,14 +706,14 @@ class ValidFrame(_ValidBase):
         out = super()._gather_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
 
         if self._validators is not None:
             validators_errors = self._gather_validators_predicates(
                 schema=schema,
                 get_expr=get_expr,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if validators_errors:
                 out.update(validators_errors)
@@ -725,7 +725,7 @@ class ValidFrame(_ValidBase):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         out: dict[str, Any] = {}
 
@@ -780,7 +780,7 @@ class ValidFrame(_ValidBase):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         if self._validators is None:
             return {}
@@ -788,7 +788,7 @@ class ValidFrame(_ValidBase):
         predicates = self._validators._gather_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
         if predicates:
             return {"validators": predicates}

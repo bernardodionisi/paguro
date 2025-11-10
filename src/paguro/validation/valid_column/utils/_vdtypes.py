@@ -141,10 +141,10 @@ class ValidStruct(ValidColumn):
         if vcol:
             vcol = copy.deepcopy(vcol)
 
-            if self._field_parents:
-                vcol._field_parents = (*self._field_parents, cast(str, self._name))
+            if self._root_up:
+                vcol._root_up = (*self._root_up, cast(str, self._name))
             else:
-                vcol._field_parents = (cast(str, self._name),)
+                vcol._root_up = (cast(str, self._name),)
 
             return vcol
 

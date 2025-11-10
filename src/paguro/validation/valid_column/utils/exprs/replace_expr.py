@@ -15,15 +15,15 @@ if TYPE_CHECKING:
 def replace_predicate(
         *,
         expr: pl.Expr,
-        struct_fields: tuple[str, ...],
+        root_down: tuple[str, ...],
 ) -> pl.Expr:
     try:
         return replace_expression_root(
             expr=expr,
-            new_root=get_struct_expr(struct_fields=struct_fields),
+            new_root=get_struct_expr(root_down=root_down),
         )
     except Exception as e:
-        msg = f"unable to determine predicate for {struct_fields}"
+        msg = f"unable to determine predicate for {root_down}"
         raise type(e)(msg) from e
 
 
@@ -94,7 +94,7 @@ def _dispatch_expr_args_for_errors(
         attr: str,
         keep_columns: IntoKeepColumns,
         with_row_index: bool | str,
-        _struct_fields: tuple[str, ...] | None,
+        _root_down: tuple[str, ...] | None,
         get_expr: Callable,
 ) -> tuple[IntoKeepColumns, bool | str, pl.Expr, pl.Expr]:
     if isinstance(value, pl.Expr):
@@ -104,20 +104,20 @@ def _dispatch_expr_args_for_errors(
             keep_columns=keep_columns,
             with_row_index=with_row_index,
         )
-        if _struct_fields:
+        if _root_down:
             predicate = replace_predicate(
                 expr=value,
-                struct_fields=_struct_fields,
+                root_down=_root_down,
             )
         else:
             predicate = expr
     else:
         expr = get_expr(attr, value, column_name)
-        if _struct_fields:
+        if _root_down:
             predicate = get_expr(
                 attr,
                 value,
-                get_struct_expr(struct_fields=_struct_fields)
+                get_struct_expr(root_down=_root_down)
             )
         else:
             predicate = expr
@@ -130,7 +130,7 @@ def _dispatch_expr_args_for_predicates(
         column_name: str,
         value: Any,
         attr: str,
-        _struct_fields: tuple[str, ...] | None,
+        _root_down: tuple[str, ...] | None,
         get_expr: Callable,
 ) -> pl.Expr:
     if isinstance(value, pl.Expr):
@@ -140,21 +140,21 @@ def _dispatch_expr_args_for_predicates(
             keep_columns=False,
             with_row_index=False,
         )
-        if _struct_fields:
+        if _root_down:
             # replace_predicate will raise if we are unable to replace root
             predicate: pl.Expr = replace_predicate(
                 expr=value,
-                struct_fields=_struct_fields,
+                root_down=_root_down,
             )
         else:
             predicate = expr
     else:
         expr = get_expr(attr, value, column_name)
-        if _struct_fields:
+        if _root_down:
             predicate = get_expr(
                 attr,
                 value,
-                get_struct_expr(struct_fields=_struct_fields)
+                get_struct_expr(root_down=_root_down)
             )
         else:
             predicate = expr

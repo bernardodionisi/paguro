@@ -93,7 +93,7 @@ class ValidFrameList(_ValidListBase[ValidFrame]):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, typed_dicts.ValidFrameErrors]:
         return super()._gather_errors(
             frame=frame,
@@ -102,7 +102,7 @@ class ValidFrameList(_ValidListBase[ValidFrame]):
             with_row_index=with_row_index,
             get_expr=get_expr,
             cast=cast,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
 
     # ------------------------------------------------------------------
@@ -115,7 +115,7 @@ class ValidFrameList(_ValidListBase[ValidFrame]):
             keep_columns: IntoKeepColumns,
             with_row_index: bool | str,
             cast: bool,
-            # _struct_fields: tuple[str, ...] | None,
+            # _root_down: tuple[str, ...] | None,
     ) -> dict[str, typed_dicts.ValidFrameErrors]:
         out: dict[str, typed_dicts.ValidFrameErrors] = {}
 
@@ -137,7 +137,7 @@ class ValidFrameList(_ValidListBase[ValidFrame]):
                 with_row_index=with_row_index,
                 get_expr=_build_expr,
                 cast=cast,
-                _struct_fields=None  # todo!
+                _root_down=None  # todo!
             )
 
             if errors:

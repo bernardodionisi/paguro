@@ -132,7 +132,7 @@ class _ValidListBase(Generic[T]):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         out: dict[str, Any] = {}
 
@@ -144,7 +144,7 @@ class _ValidListBase(Generic[T]):
                 with_row_index=with_row_index,
                 get_expr=get_expr,
                 cast=cast,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
 
             if errors:
@@ -159,7 +159,7 @@ class _ValidListBase(Generic[T]):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         out: dict[str, Any] = {}
 
@@ -167,7 +167,7 @@ class _ValidListBase(Generic[T]):
             predicates: Any = v._gather_predicates(
                 schema=schema,
                 get_expr=get_expr,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
 
             if predicates:

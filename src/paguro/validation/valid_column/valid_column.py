@@ -782,14 +782,25 @@ class ValidColumn(_ValidBase):
             with_row_index=False,  # row index is created after unnest
         )
 
-        struct_schema = (
-            frame
-            .select(self._name)
-            .collect_schema()
-            [self._name]
-            .to_schema()  # type: ignore[attr-defined]
-            # .select(self._name).unnest(self._name).collect_schema()
-        )
+        # this fails if the user does not specify a name/selector that only includes
+        # struct columns
+
+        try:
+            struct_schema = (
+                frame
+                .select(self._name)
+                .collect_schema()
+                [self._name]
+                .to_schema()  # type: ignore[attr-defined]
+                # .select(self._name).unnest(self._name).collect_schema()
+            )
+        except AttributeError as e:
+            msg = (
+                f"Failed collecting the schema for column: {self._name}.\n"
+                f"The column must be a struct column, try defining the valid column "
+                f"with a column name or a selector pointing only to struct columns."
+            )
+            raise type(e)(msg) from e
 
         frame = frame.unnest(self._name)
 

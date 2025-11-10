@@ -47,12 +47,7 @@ from polars.selectors import Selector
 if TYPE_CHECKING:
     from paguro.shared.dtypes.into_dtypes import IntoDataType
 
-    from collections.abc import Iterable
-
     import decimal
-    import enum
-    import datetime
-    from polars._typing import TimeUnit, PolarsDataType, PythonDataType
     from paguro.typing import FieldsValidators, IntoNameVC
 
 __all__ = [
@@ -80,7 +75,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def __call__(
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -116,7 +111,7 @@ class VCol:
     @classmethod
     def _(
             cls,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -159,7 +154,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Struct(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: pl.Struct | type[pl.Struct] | None = pl.Struct,
             *,
             fields: FieldsValidators | None = None,
@@ -214,7 +209,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Enum(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: pl.Enum | type[pl.Enum] = pl.Enum,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -252,7 +247,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Categorical(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -287,7 +282,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def String(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             contains: str | None = None,
             contains_any: str | None = None,
@@ -350,7 +345,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Binary(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -385,7 +380,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Boolean(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -421,7 +416,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Date(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -457,7 +452,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def DateTime(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: pl.Datetime | type[pl.Datetime] = pl.Datetime,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -496,7 +491,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Duration(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: pl.Duration | type[pl.Duration] = pl.Duration,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -534,7 +529,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Time(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -569,7 +564,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Array(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: pl.Array | type[pl.Array] = pl.Array,
             *,
             contains: Any | None = None,
@@ -611,7 +606,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def List(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: pl.List | type[pl.List] = pl.List,
             *,
             contains: Any | None = None,
@@ -663,7 +658,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Decimal(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: pl.Decimal | type[pl.Decimal] = pl.Decimal,
             *,
             ge: int | float | decimal.Decimal | None = None,
@@ -715,7 +710,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Numeric(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -771,7 +766,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Integer(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -821,7 +816,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int8(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -871,7 +866,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int16(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -921,7 +916,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int32(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -971,7 +966,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int64(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1021,7 +1016,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int128(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1071,7 +1066,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInteger(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1121,7 +1116,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt8(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1171,7 +1166,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt16(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1221,7 +1216,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt32(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1271,7 +1266,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt64(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1321,7 +1316,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt128(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1371,7 +1366,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Float(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1427,7 +1422,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Float32(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1483,7 +1478,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Float64(  # noqa: N802
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,

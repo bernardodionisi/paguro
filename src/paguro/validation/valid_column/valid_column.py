@@ -92,7 +92,7 @@ class ValidColumn(_ValidBase):
 
     def __init__(
             self,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -178,7 +178,7 @@ class ValidColumn(_ValidBase):
     @classmethod
     def _(
             cls,
-            name: IntoNameVC,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,

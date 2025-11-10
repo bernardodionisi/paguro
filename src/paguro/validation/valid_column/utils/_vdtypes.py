@@ -4,22 +4,15 @@ import copy
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 import polars as pl
-from polars.selectors import Selector
 
 from paguro.shared._typing._typing import IsBetweenTuple
 
 from paguro.validation.valid_column.valid_column import ValidColumn
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Iterable
     import decimal
-    import enum
-    import datetime
-    from polars._typing import TimeUnit, PolarsDataType, PythonDataType
 
-    from polars.datatypes.classes import DataType
-
-    from paguro.typing import FieldsValidators
+    from paguro.typing import FieldsValidators, IntoNameVC
     from paguro.validation.validation import Validation
 
 __all__ = [
@@ -58,7 +51,7 @@ __all__ = [
 class ValidStruct(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: pl.Struct | type[pl.Struct] | None = pl.Struct,
             *,
             fields: FieldsValidators | None = None,
@@ -156,7 +149,7 @@ class ValidStruct(ValidColumn):
 class ValidArray(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: pl.Array | type[pl.Array] = pl.Array,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -183,7 +176,7 @@ class ValidArray(ValidColumn):
 class ValidList(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: pl.List | type[pl.List] = pl.List,
             *,
             contains: Any | None = None,
@@ -218,7 +211,7 @@ class ValidList(ValidColumn):
 class ValidEnum(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: pl.Enum | type[pl.Enum] = pl.Enum,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -239,7 +232,7 @@ class ValidEnum(ValidColumn):
 class ValidCategorical(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -260,7 +253,7 @@ class ValidCategorical(ValidColumn):
 class ValidString(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             contains: str | None = None,
             contains_any: str | None = None,
@@ -303,7 +296,7 @@ class ValidString(ValidColumn):
 class ValidBinary(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -324,7 +317,7 @@ class ValidBinary(ValidColumn):
 class ValidBoolean(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -344,7 +337,7 @@ class ValidBoolean(ValidColumn):
 class ValidDate(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -365,7 +358,7 @@ class ValidDate(ValidColumn):
 class ValidDateTime(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: pl.Datetime | type[pl.Datetime] = pl.Datetime,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -386,7 +379,7 @@ class ValidDateTime(ValidColumn):
 class ValidDuration(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: pl.Duration | type[pl.Duration] = pl.Duration,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -407,7 +400,7 @@ class ValidDuration(ValidColumn):
 class ValidTime(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -428,7 +421,7 @@ class ValidTime(ValidColumn):
 class ValidNumeric(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -470,7 +463,7 @@ class ValidInteger(ValidColumn):
 
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -504,7 +497,7 @@ class ValidInteger(ValidColumn):
 class ValidInt8(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -538,7 +531,7 @@ class ValidInt8(ValidColumn):
 class ValidInt16(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -572,7 +565,7 @@ class ValidInt16(ValidColumn):
 class ValidInt32(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -606,7 +599,7 @@ class ValidInt32(ValidColumn):
 class ValidInt64(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -640,7 +633,7 @@ class ValidInt64(ValidColumn):
 class ValidInt128(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -674,7 +667,7 @@ class ValidInt128(ValidColumn):
 class ValidUInteger(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -708,7 +701,7 @@ class ValidUInteger(ValidColumn):
 class ValidUInt8(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -742,7 +735,7 @@ class ValidUInt8(ValidColumn):
 class ValidUInt16(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -776,7 +769,7 @@ class ValidUInt16(ValidColumn):
 class ValidUInt32(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -810,7 +803,7 @@ class ValidUInt32(ValidColumn):
 class ValidUInt64(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -844,7 +837,7 @@ class ValidUInt64(ValidColumn):
 class ValidUInt128(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -878,7 +871,7 @@ class ValidUInt128(ValidColumn):
 class ValidFloat(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -916,7 +909,7 @@ class ValidFloat(ValidColumn):
 class ValidFloat32(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -954,7 +947,7 @@ class ValidFloat32(ValidColumn):
 class ValidFloat64(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -992,7 +985,7 @@ class ValidFloat64(ValidColumn):
 class ValidDecimal(ValidColumn):
     def __init__(
             self,
-            name: str | Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: pl.Decimal | type[pl.Decimal] = pl.Decimal,
             *,
             ge: int | float | decimal.Decimal | None = None,

@@ -59,7 +59,7 @@ from paguro.validation.valid_column.utils.utils import (
 )
 from paguro.validation.valid_column.utils.exprs.build_expression import _build_expr
 from paguro.shared._typing import typed_dicts
-from paguro.typing import CollectConfig
+from paguro.typing import CollectConfig, IntoNameVC
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Iterable
@@ -93,7 +93,7 @@ class ValidColumn(_ValidBase):
 
     def __init__(
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -147,10 +147,19 @@ class ValidColumn(_ValidBase):
 
             See :ref:`example <tutorials-shorts-vcol-constraints>`
         """
-        if name is not None and not isinstance(name, (str, Selector)):
-            name = cs.by_name(name)
 
-        super().__init__(name=name, constraints=constraints)
+        self._index: int | None = None  # is set if name is an integer
+        if not isinstance(name, (str, Selector)):
+            if isinstance(name, int):
+                self._index = name
+                name = cs.by_index(name)
+            elif name is not None:  # Collection[str]
+                name = cs.by_name(name)
+
+        super().__init__(
+            name=name,  # string | None | Selector
+            constraints=constraints,
+        )
 
         self._dtype = parse_dtype_into_frozenset(dtype)
 
@@ -170,7 +179,7 @@ class ValidColumn(_ValidBase):
     @classmethod
     def _(
             cls,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,

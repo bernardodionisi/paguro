@@ -58,9 +58,10 @@ __all__ = [
 class ValidStruct(ValidColumn):
     def __init__(
             self,
-            *validators: FieldsValidators,
             name: str | Collection[str] | Selector | None = None,
-            dtype: pl.Struct | type[pl.Struct] = pl.Struct,
+            dtype: pl.Struct | type[pl.Struct] | None = pl.Struct,
+            *,
+            fields: FieldsValidators | None = None,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
@@ -75,26 +76,20 @@ class ValidStruct(ValidColumn):
             **constraints,
         )
 
-        if validators:
+        if fields is not None:
             # TODO: allow_rename not supported when set in fields validators:
             #   - we are not renaming the fields or checking
             #       whether the fields have been renamed
             #   - todo: raise error if the allow_rename
             #       flag has been set for any ValidColumn in fields
 
-            if isinstance(validators[0], (str, Selector)):
-                # missing Collection[str]
-                if name is None:
-                    self._name = validators[0]
-                    validators = validators[1:]
-
             from paguro.validation.validation import Validation
             # validators is now a tuple [ValidatorOrExpr, Iterable[ValidatorOrExpr], Validation]
-            self._fields = Validation(*validators)  # type: ignore[arg-type]
+            self._fields = Validation(fields)  # type: ignore[arg-type]
 
-        if dtype is None and validators:
-            # todo: distinguish between required and not required
-            self._set_struct_dtype_from_fields(replace=True)
+            if dtype is None:
+                # todo: distinguish between required and not required
+                self._set_struct_dtype_from_fields(replace=True)
 
     def __repr__(self):
         return self._repr_or_str(string=False)

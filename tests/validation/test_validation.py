@@ -40,8 +40,10 @@ def validation() -> pg.Validation:
         pg.vcol("a", ge=2, c0=pl.all().ge(1)),
         pg.vcol("b", str_contains="@"),
         pg.vcol.Struct(
-            pg.Validation(pg.vframe(pl.col("c1") > pl.col("c2"))),
             name="c",
+            fields=[
+                pg.Validation(pg.vframe(pl.col("c1") > pl.col("c2")))
+            ]
         ),
         pg.vframe(
             pl.col("a") == pl.col("c").struct.field("c1"),
@@ -58,11 +60,13 @@ def validation_with_transform() -> pg.Validation:
         pg.vcol("a", ge=2, c0=pl.all().ge(1)),
         pg.vcol("b", str_contains="@"),
         pg.vcol.Struct(
-            pg.Validation(
-                pg.vcol("c1", le=0),
-                pg.vframe(pl.col("c1") > pl.col("c2"))
-            ),
             name="c",
+            fields=[
+                pg.Validation(
+                    pg.vcol("c1", le=0),
+                    pg.vframe(pl.col("c1") > pl.col("c2"))
+                ),
+            ]
         ),
         pg.vframe(
             pl.col("a") == pl.col("c").struct.field("c1"),

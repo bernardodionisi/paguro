@@ -200,7 +200,7 @@ def _preprocess_validator_mapping(
 
             _val = _preprocess_validator_mapping(v)
             validators.append(
-                ValidStruct(*_val, name=k)
+                ValidStruct(name=k, fields=_val)
             )
 
         elif isinstance(v, (ValidColumn, ValidFrame)):

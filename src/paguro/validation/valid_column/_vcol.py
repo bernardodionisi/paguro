@@ -159,9 +159,10 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Struct(  # noqa: N802
             self,
-            *validators: FieldsValidators,
             name: str | typing.Collection[str] | Selector | None = None,
-            dtype: pl.Struct | type[pl.Struct] = pl.Struct,
+            dtype: pl.Struct | type[pl.Struct] | None = pl.Struct,
+            *,
+            fields: FieldsValidators | None = None,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
@@ -172,9 +173,6 @@ class VCol:
 
         Parameters
         ----------
-        validators
-            ValidColumn or ValidFrame validators for the fields of the struct column.
-            Think of the struct column as a frame itself.
         name
             The column name.
         dtype
@@ -204,9 +202,9 @@ class VCol:
             )
         """
         return ValidStruct(
-            *validators,
             name=name,
             dtype=dtype,
+            fields=fields,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,

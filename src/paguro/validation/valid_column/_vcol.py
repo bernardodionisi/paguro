@@ -161,7 +161,7 @@ class VCol:
             self,
             *validators: FieldsValidators,
             name: str | typing.Collection[str] | Selector | None = None,
-            dtype: pl.Struct | type[pl.Struct] | None = pl.Struct,
+            dtype: pl.Struct | type[pl.Struct] = pl.Struct,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
@@ -217,7 +217,7 @@ class VCol:
     def Enum(  # noqa: N802
             self,
             name: str | typing.Collection[str] | Selector | None = None,
-            categories: pl.Series | Iterable[str] | type[enum.Enum] | None = None,
+            dtype: pl.Enum | type[pl.Enum] = pl.Enum,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -244,7 +244,7 @@ class VCol:
         """
         return ValidEnum(
             name=name,
-            categories=categories,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -460,8 +460,7 @@ class VCol:
     def DateTime(  # noqa: N802
             self,
             name: str | typing.Collection[str] | Selector | None = None,
-            time_unit: TimeUnit | None = None,
-            time_zone: str | datetime.tzinfo | None = None,
+            dtype: pl.Datetime | type[pl.Datetime] = pl.Datetime,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -489,8 +488,7 @@ class VCol:
         """
         return ValidDateTime(
             name=name,
-            time_unit=time_unit,
-            time_zone=time_zone,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -501,7 +499,7 @@ class VCol:
     def Duration(  # noqa: N802
             self,
             name: str | typing.Collection[str] | Selector | None = None,
-            time_unit: TimeUnit | None = None,
+            dtype: pl.Duration | type[pl.Duration] = pl.Duration,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -528,7 +526,7 @@ class VCol:
         """
         return ValidDuration(
             name=name,
-            time_unit=time_unit,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -574,8 +572,7 @@ class VCol:
     def Array(  # noqa: N802
             self,
             name: str | typing.Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
-            shape: int | tuple[int, ...] | None = None,
+            dtype: pl.Array | type[pl.Array] = pl.Array,
             *,
             contains: Any | None = None,
             required: bool | Literal["dynamic"] = True,
@@ -605,8 +602,7 @@ class VCol:
         """
         return ValidArray(
             name=name,
-            inner=inner,
-            shape=shape,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -618,7 +614,7 @@ class VCol:
     def List(  # noqa: N802
             self,
             name: str | typing.Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
+            dtype: pl.List | type[pl.List] = pl.List,
             *,
             contains: Any | None = None,
             len_ge: int | None = None,
@@ -636,7 +632,6 @@ class VCol:
         Parameters
         ----------
         name
-        inner
         contains
         len_ge
         len_gt
@@ -655,7 +650,7 @@ class VCol:
         """
         return ValidList(
             name=name,
-            inner=inner,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -664,6 +659,58 @@ class VCol:
             len_gt=len_gt,
             len_le=len_le,
             len_lt=len_lt,
+            **constraints
+        )
+
+    @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
+    def Decimal(  # noqa: N802
+            self,
+            name: str | typing.Collection[str] | Selector | None = None,
+            dtype: pl.Decimal | type[pl.Decimal] = pl.Decimal,
+            *,
+            ge: int | float | decimal.Decimal | None = None,
+            gt: int | float | decimal.Decimal | None = None,
+            le: int | float | decimal.Decimal | None = None,
+            lt: int | float | decimal.Decimal | None = None,
+            is_between: IsBetweenTuple = None,
+            required: bool | Literal["dynamic"] = True,
+            allow_nulls: bool = False,
+            unique: bool = False,
+            **constraints: Any,
+    ) -> ValidDecimal:
+        """
+        Decimal valid column constructor.
+
+        Parameters
+        ----------
+        name
+        ge
+        gt
+        le
+        lt
+        is_between
+{{ AdditionalParameters }}
+
+        Examples
+        --------
+
+        .. ipython:: python
+
+            print(
+                pg.vcol.Decimal()
+            )
+        """
+        return ValidDecimal(
+            name=name,
+            dtype=dtype,
+            required=required,
+            allow_nulls=allow_nulls,
+            unique=unique,
+            ge=ge,
+            gt=gt,
+            le=le,
+            lt=lt,
+            is_between=is_between,
             **constraints
         )
 
@@ -1488,61 +1535,5 @@ class VCol:
             is_between=is_between,
             is_infinite=is_infinite,
             is_nan=is_nan,
-            **constraints
-        )
-
-    @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
-    def Decimal(  # noqa: N802
-            self,
-            name: str | typing.Collection[str] | Selector | None = None,
-            precision: int | None = None,
-            scale: int | None = 0,
-            *,
-            ge: int | float | decimal.Decimal | None = None,
-            gt: int | float | decimal.Decimal | None = None,
-            le: int | float | decimal.Decimal | None = None,
-            lt: int | float | decimal.Decimal | None = None,
-            is_between: IsBetweenTuple = None,
-            required: bool | Literal["dynamic"] = True,
-            allow_nulls: bool = False,
-            unique: bool = False,
-            **constraints: Any,
-    ) -> ValidDecimal:
-        """
-        Decimal valid column constructor.
-
-        Parameters
-        ----------
-        name
-        precision
-        scale
-        ge
-        gt
-        le
-        lt
-        is_between
-{{ AdditionalParameters }}
-
-        Examples
-        --------
-
-        .. ipython:: python
-
-            print(
-                pg.vcol.Decimal()
-            )
-        """
-        return ValidDecimal(
-            name=name,
-            scale=scale,
-            precision=precision,
-            required=required,
-            allow_nulls=allow_nulls,
-            unique=unique,
-            ge=ge,
-            gt=gt,
-            le=le,
-            lt=lt,
-            is_between=is_between,
             **constraints
         )

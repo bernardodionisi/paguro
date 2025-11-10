@@ -60,7 +60,7 @@ class ValidStruct(ValidColumn):
             self,
             *validators: FieldsValidators,
             name: str | Collection[str] | Selector | None = None,
-            dtype: pl.Struct | type[pl.Struct] | None = pl.Struct,
+            dtype: pl.Struct | type[pl.Struct] = pl.Struct,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
@@ -127,13 +127,15 @@ class ValidStruct(ValidColumn):
         # todo: search vframes
 
         if not isinstance(self._name, str):
-            raise TypeError(
-                f"Field can only be accessed for sting named vcol: "
+            msg = (
+                f"Field can only be accessed if the vcol name is set to a string: "
                 f"the name is set to {self._name}"
             )
+            raise TypeError(msg)
 
         if self._fields is None:
-            raise AttributeError(f"No fields have been set for {self._name}")
+            msg = f"No fields have been set for {self._name}"
+            raise AttributeError()
         vcol: ValidColumn | None = self._fields._find_vcol(
             name=name,
             return_first=True,
@@ -152,15 +154,15 @@ class ValidStruct(ValidColumn):
             return vcol
 
         else:
-            raise AttributeError(f"No field named {name} found.")
+            msg = f"No field named {name} found."
+            raise AttributeError(msg)
 
 
 class ValidArray(ValidColumn):
     def __init__(
             self,
             name: str | Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
-            shape: int | tuple[int, ...] | None = None,
+            dtype: pl.Array | type[pl.Array] = pl.Array,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -168,12 +170,6 @@ class ValidArray(ValidColumn):
             contains: Any | None = None,
             **constraints: Any,
     ) -> None:
-        dtype: DataType | type[DataType] = pl.Array
-        if shape is not None or inner is not None:
-            if inner is None:
-                raise TypeError("Please provide inner dtype when setting the shape.")
-            dtype = pl.Array(inner=inner, shape=shape)
-
         _constraints = _list_constraints_remove_none(
             contains=contains,
         )
@@ -193,7 +189,7 @@ class ValidList(ValidColumn):
     def __init__(
             self,
             name: str | Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
+            dtype: pl.List | type[pl.List] = pl.List,
             *,
             contains: Any | None = None,
             len_ge: int | None = None,
@@ -205,10 +201,6 @@ class ValidList(ValidColumn):
             unique: bool = False,
             **constraints: Any,
     ) -> None:
-        dtype: DataType | type[DataType] = pl.List
-        if inner is not None:
-            dtype = pl.List(inner=inner)
-
         _constraints = _list_constraints_remove_none(
             contains=contains,
             len_ge=len_ge,
@@ -232,17 +224,13 @@ class ValidEnum(ValidColumn):
     def __init__(
             self,
             name: str | Collection[str] | Selector | None = None,
-            categories: pl.Series | Iterable[str] | type[enum.Enum] | None = None,
+            dtype: pl.Enum | type[pl.Enum] = pl.Enum,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
             **constraints: Any,
     ) -> None:
-        if categories is not None:
-            dtype: DataType | type[DataType] = pl.Enum(categories=categories)
-        else:
-            dtype = pl.Enum
         super().__init__(
             name=name,
             dtype=dtype,
@@ -368,9 +356,10 @@ class ValidDate(ValidColumn):
             unique: bool = False,
             **constraints: Any,
     ) -> None:
+        dtype = pl.Date
         super().__init__(
             name=name,
-            dtype=pl.Date,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -382,26 +371,13 @@ class ValidDateTime(ValidColumn):
     def __init__(
             self,
             name: str | Collection[str] | Selector | None = None,
-            time_unit: TimeUnit | None = None,
-            time_zone: str | datetime.tzinfo | None = None,
+            dtype: pl.Datetime | type[pl.Datetime] = pl.Datetime,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
             **constraints: Any,
     ) -> None:
-        if time_zone is not None:
-            if time_unit is None:
-                # default value for polars
-                time_unit: TimeUnit = "us"  # type: ignore[no-redef]
-        if time_unit is not None:
-            dtype: DataType | type[DataType] = pl.Datetime(
-                time_unit=time_unit,
-                time_zone=time_zone
-            )
-        else:
-            dtype = pl.Datetime
-
         super().__init__(
             name=name,
             dtype=dtype,
@@ -416,18 +392,13 @@ class ValidDuration(ValidColumn):
     def __init__(
             self,
             name: str | Collection[str] | Selector | None = None,
-            time_unit: TimeUnit | None = None,
+            dtype: pl.Duration | type[pl.Duration] = pl.Duration,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
             **constraints: Any,
     ) -> None:
-        if time_unit is not None:
-            dtype: DataType | type[DataType] = pl.Duration(time_unit=time_unit)
-        else:
-            dtype = pl.Duration
-
         super().__init__(
             name=name,
             dtype=dtype,
@@ -1027,8 +998,7 @@ class ValidDecimal(ValidColumn):
     def __init__(
             self,
             name: str | Collection[str] | Selector | None = None,
-            precision: int | None = None,
-            scale: int | None = 0,
+            dtype: pl.Decimal | type[pl.Decimal] = pl.Decimal,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1047,20 +1017,6 @@ class ValidDecimal(ValidColumn):
             lt=lt,
             is_between=is_between,
         )
-
-        if precision is not None:
-            if scale is not None:
-                dtype: DataType | type[DataType] = pl.Decimal(
-                    precision=precision,
-                    scale=scale,
-                )
-            else:
-                dtype = pl.Decimal(precision=precision)
-        elif scale is not None:
-            dtype = pl.Decimal(scale=scale)
-        else:
-            dtype = pl.Decimal
-
         super().__init__(
             name=name,
             dtype=dtype,

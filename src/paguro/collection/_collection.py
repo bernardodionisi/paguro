@@ -370,7 +370,11 @@ class _Collection(Generic[_DST]):
             ]
         else:
             items = list(self._data.values())
-        return concat(items, how=how, **kwargs, )
+        return concat(  # type: ignore[return-value]
+            items,
+            how=how,
+            **kwargs,
+        )
 
     # ---------------------- polars methods ----------------------------
 

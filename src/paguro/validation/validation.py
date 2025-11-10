@@ -14,7 +14,6 @@ from paguro.validation.exception.utils.filter_utils import _gather_predicates
 from paguro.validation.exception.validate_dispatch import (
     _validate_dispatch,
 )
-from paguro.validation.shared._docs import set_doc_string, VALIDATE_PARAMS
 from paguro.validation.shared.cast import cast_frame
 from paguro.validation.shared.expand_names import expand_valid_column_list
 from paguro.validation.shared.preprocessing.preprocess_validators import (
@@ -211,7 +210,7 @@ class Validation:
             *,
             include_transformed_frames: bool = False,
             include_fields: bool = False,
-    ) -> Self:
+    ) -> Validation:
         validation = copy.deepcopy(self)
         return rename_valid_columns(
             validation=validation,
@@ -434,7 +433,10 @@ class Validation:
         return out
 
     @classmethod
-    def _from_dict(cls, source: Mapping[str, Any]) -> Self:
+    def _from_dict(
+            cls,
+            source: Mapping[str, Any],
+    ) -> Self:
         instance = cls()
 
         # ------
@@ -461,10 +463,12 @@ class Validation:
 
         instance._name = source.get("name", None)
 
-        info = source.get("info", None)
-        if info is not None:
-            info = InfoCollection._from_dict_with_attributes(info_list_dict=info)
-        instance._info = info
+        info_dict: dict | None = source.get("info")
+
+        if info_dict is not None:
+            instance._info = InfoCollection.from_dict(info_dict)
+        else:
+            instance._info = None
 
         return instance
 
@@ -491,7 +495,6 @@ class Validation:
 
     # ------------------------------------------------------------------
 
-    # @set_doc_string(parameters=VALIDATE_PARAMS)
     def validate(  # noqa: D102
             self,
             data: IntoValidation,

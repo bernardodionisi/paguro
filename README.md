@@ -17,7 +17,7 @@
 ---
 
 - ➪ [Documentation](https://bernardodionisi.github.io/paguro/latest/)
-    - ➪ [API reference](https://bernardodionisi.github.io/paguro/latest/)
+    - ➪ [API reference](https://bernardodionisi.github.io/paguro/latest/pages/api/)
 
 ## Installation
 
@@ -31,7 +31,7 @@
 
 `Paguro` introduces a new expressive API for defining validation
 
-Here is a basic example of what it looks like:
+Here is a simple example:
 
 ```python
 import paguro as pg
@@ -88,5 +88,6 @@ stay tuned for more examples!
 
 ---
 
-**Paguro** is distributed under the [Apache License, Version 2.0](https://spdx.org/licenses/Apache-2.0.html).  
-&copy; 2025 Bernardo Dionisi | SPDX-License-Identifier: Apache-2.0
+**Paguro** is distributed under
+the [Apache License, Version 2.0](https://spdx.org/licenses/Apache-2.0.html).  
+&copy; 2025 Bernardo Dionisi | SPDX-License-Identifier: Apache-2.0

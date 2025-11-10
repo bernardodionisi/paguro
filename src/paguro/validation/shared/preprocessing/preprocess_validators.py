@@ -36,8 +36,9 @@ def preprocess_vcs_vfs(
         _parse_validators_as_iterable(validators)
     )
 
-    vfe: ValidFrame | None = _preprocess_expressions(
-        *_vals, **named_validators
+    vfe, non_exprs_named_validators = _preprocess_expressions(
+        *_vals,
+        **named_validators,
     )
 
     vcl: list[ValidColumn]
@@ -47,7 +48,7 @@ def preprocess_vcs_vfs(
     nvcl: list[ValidColumn]
     nvfl: list[ValidFrame]
     nvcl, nvfl = _preprocess_named_validators(
-        named_validators=named_validators
+        named_validators=non_exprs_named_validators,
     )
 
     if nvcl:
@@ -73,8 +74,8 @@ def preprocess_vcs_vfs(
 def _preprocess_expressions(
         *validators: ValidatorOrExpr | Iterable[ValidatorOrExpr] | Validation,
         **named_validators: ValidatorOrExpr,
-) -> ValidFrame | None:
-    exprs = {}
+) -> tuple[ValidFrame | None, dict[str, ValidColumn | ValidFrame]]:
+    exprs: dict[str, pl.Expr] = {}
 
     # Process positional arguments
 
@@ -82,9 +83,12 @@ def _preprocess_expressions(
     for arg in validators:
         if isinstance(arg, pl.Expr):
             exprs[f"constraint_{counter}"] = arg
-            counter += 1  # use counter (instead of enumerate) otherwise we count also non-pl.Expr
+            counter += 1  # use counter (instead of enumerate)
+            # otherwise we count also non-pl.Expr
 
     # Process keyword arguments
+
+    non_exprs_named_validators: dict[str, ValidColumn | ValidFrame] = {}
     for key, value in named_validators.items():
         if isinstance(value, pl.Expr):
             # Handle duplicate keys by adding suffix
@@ -94,11 +98,13 @@ def _preprocess_expressions(
                 key = f"{original_key}_{counter}"
                 counter += 1
             exprs[key] = value
+        else:
+            non_exprs_named_validators[key] = value
 
     if not exprs:
-        return None
+        return None, non_exprs_named_validators
 
-    return ValidFrame(**exprs)
+    return ValidFrame._(constraints=exprs), non_exprs_named_validators
 
 
 def _preprocess_validators(

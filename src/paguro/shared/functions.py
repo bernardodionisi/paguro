@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, overload, Union
 
 import polars as pl
 
@@ -14,6 +14,7 @@ from paguro.validation.shared.preprocessing.duplicates import DuplicateNameError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from paguro.ashi.info.info_collection import InfoCollection
 
 
 # from typing import TypeVarTuple, Unpack
@@ -66,20 +67,36 @@ def collect_all(
     return out
 
 
+# ----------------------------------------------------------------------
+
+EagerLike = Union[pl.DataFrame, Dataset]
+LazyLike = Union[pl.LazyFrame, LazyDataset]
+
+
+@overload
+def concat(frame_likes: Iterable[EagerLike], **kwargs) -> Dataset: ...
+
+
+@overload
+def concat(frame_likes: Iterable[LazyLike], **kwargs) -> LazyDataset: ...
+
+
 def concat(
-        frame_likes: Iterable[FrameLike],
+        frame_likes: Iterable[EagerLike | LazyLike],
         **kwargs,
 ) -> Dataset | LazyDataset:
-    frames = []
-    validations = []
-    infos = []  # todo
-    is_eager = False
+    frames: list[pl.LazyFrame] = []
+    validations: list[Validation] = []
+    infos: list[InfoCollection] = []  # todo
+    is_eager: bool = False
 
     for fl in frame_likes:
         if isinstance(fl, (pl.DataFrame, pl.LazyFrame)):
             if not is_eager and isinstance(fl, pl.DataFrame):
                 is_eager = True
-            frames.append(fl)
+            frames.append(
+                fl.lazy()
+            )
 
         elif isinstance(fl, (Dataset, LazyDataset)):
 
@@ -87,7 +104,7 @@ def concat(
                 is_eager = True
 
             frames.append(
-                fl.to_polars()
+                fl.to_polars().lazy()
             )
 
             if fl._validation is not None:
@@ -96,7 +113,9 @@ def concat(
                 )
 
             if fl._info is not None:
-                infos.append(fl._info)
+                infos.append(
+                    fl._info
+                )
 
         else:
             raise TypeError(f"Invalid frame type: {type(fl)}")
@@ -105,7 +124,7 @@ def concat(
 
     dataset: Dataset | LazyDataset
     if is_eager:
-        dataset = Dataset(frame)
+        dataset = Dataset(frame.collect())
     else:
         dataset = LazyDataset(frame)
 
@@ -116,8 +135,8 @@ def concat(
             dataset._validation = copy.deepcopy(validation)
         except DuplicateNameError as e:
             warnings.warn(
-                f"Concatenationg validation failed. "
-                f"The concatenated dataset does not contain validation: {e}"
+                f"Concatenating validation failed -- {e}"
+                f"\nWarning: The concatenated dataset does not contain validation."
             )
             pass
 

@@ -154,7 +154,7 @@ class _BaseValidationError(FrameTree, Exception):
             key=key,
             sequentially=collect.get("sequentially", False),
             limit=collect.get("limit", False),
-            stop_on_non_empty=collect.get("stop_on_non_empty", False),
+            stop_on_non_empty=bool(collect.get("stop_on_non_empty", False)),
             row_counts=collect.get("row_counts", False),
             collect_kwargs=collect.get("collect_kwargs", {}),
         )
@@ -193,7 +193,7 @@ class _BaseValidationError(FrameTree, Exception):
         return write_text_to_html(
             path=path,
             width=width,
-            text=_repr,
+            text=str(_repr),
             color=color,
             background=background,
             **kwargs,
@@ -208,7 +208,7 @@ class _BaseValidationError(FrameTree, Exception):
             title: str | None = None,
             **kwargs: Any,
     ) -> str | None:
-        _repr = self._ashi_string_repr(errors_only=errors_only)
+        _repr = str(self._ashi_string_repr(errors_only=errors_only))
 
         return write_text_to_svg(
             path=path,

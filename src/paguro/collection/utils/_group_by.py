@@ -54,9 +54,9 @@ class _CollectionGroupBy(Generic[_C]):
                 **kwargs: Any,
         ) -> Any:
             if new._collection._scope is None:
-                scope = new._collection._data.keys()
+                scope: tuple[str, ...] = tuple(new._collection._data.keys())
             else:
-                scope = [new._collection._scope]
+                scope = new._collection._scope
 
             for s in scope:
                 obj = new._group_by_or_data_objects[s]

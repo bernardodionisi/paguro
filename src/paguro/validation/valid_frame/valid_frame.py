@@ -145,7 +145,7 @@ class ValidFrame(_ValidBase):
             # should we display them in order
             constraints = set(self._constraints.keys())
         else:
-            constraints = {}
+            constraints = set()
 
         if self._validators is not None:
             out += f"\nvalidators={self._validators.__str__()},\n"
@@ -352,7 +352,10 @@ class ValidFrame(_ValidBase):
         return out
 
     @classmethod
-    def _from_dict(cls, source: dict[str, Any]) -> ValidFrame:
+    def _from_dict(
+            cls,
+            source: dict[str, Any],
+    ) -> ValidFrame:
         # vf_dict = deserialize(source, cls=CustomJSONDecoder)
         vf_dict = copy.deepcopy(source)
 
@@ -363,8 +366,6 @@ class ValidFrame(_ValidBase):
         constraints: dict[str, Any] = vf_dict.pop("constraints")
 
         info_dict: dict = vf_dict.pop("info", None)
-
-        # TODO: check that validators deserializes correctly
 
         validation: Validation | None = None
         if validators is not None:
@@ -383,9 +384,7 @@ class ValidFrame(_ValidBase):
         # -----
 
         if info_dict is not None:
-            instance._info = InfoCollection._from_dict_with_attributes(
-                info_list_dict=info_dict
-            )
+            instance._info = InfoCollection.from_dict(info_dict)
         else:
             instance._info = None
 

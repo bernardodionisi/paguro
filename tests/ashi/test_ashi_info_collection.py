@@ -175,11 +175,11 @@ def test_drop_and_drop_where_are_immutable():
 
 def test_serialize_and_deserialize_data_view():
     ic = InfoCollection().append("A", a=1).append("B", x="y")
-    s = ic.serialize()
+    s = ic._serialize()
     data = json.loads(s)
     assert data == {"A": {"a": 1}, "B": {"x": "y"}}
 
-    ic2 = InfoCollection.deserialize(s)
+    ic2 = InfoCollection._deserialize(s)
     assert body(ic2) == {"A": {"a": 1}, "B": {"x": "y"}}
     # data-only (de)serialization does not carry attrs
     assert ic2["A"]._is_schema_level is False

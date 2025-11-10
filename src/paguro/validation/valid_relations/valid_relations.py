@@ -89,7 +89,7 @@ class ValidRelations:
             cls,
             *validators: ValidFrame | typing.Iterable[ValidFrame],
             relations: IntoRelations | None = None,
-            constraints: dict[str, CustomConstraint] = None,
+            constraints: dict[str, CustomConstraint] | None = None,
     ) -> ValidRelations:
         if constraints is None:
             constraints = {}

@@ -89,7 +89,8 @@ class ValidStruct(ValidColumn):
                     validators = validators[1:]
 
             from paguro.validation.validation import Validation
-            self._fields = Validation(*validators)
+            # validators is now a tuple [ValidatorOrExpr, Iterable[ValidatorOrExpr], Validation]
+            self._fields = Validation(*validators)  # type: ignore[arg-type]
 
         if dtype is None and validators:
             # todo: distinguish between required and not required
@@ -154,6 +155,79 @@ class ValidStruct(ValidColumn):
             raise AttributeError(f"No field named {name} found.")
 
 
+class ValidArray(ValidColumn):
+    def __init__(
+            self,
+            name: str | Collection[str] | Selector | None = None,
+            inner: PolarsDataType | PythonDataType | None = None,
+            shape: int | tuple[int, ...] | None = None,
+            *,
+            required: bool | Literal["dynamic"] = True,
+            allow_nulls: bool = False,
+            unique: bool = False,
+            contains: Any | None = None,
+            **constraints: Any,
+    ) -> None:
+        dtype: DataType | type[DataType] = pl.Array
+        if shape is not None or inner is not None:
+            if inner is None:
+                raise TypeError("Please provide inner dtype when setting the shape.")
+            dtype = pl.Array(inner=inner, shape=shape)
+
+        _constraints = _list_constraints_remove_none(
+            contains=contains,
+        )
+
+        super().__init__(
+            name=name,
+            dtype=dtype,
+            required=required,
+            allow_nulls=allow_nulls,
+            unique=unique,
+            **_constraints,
+            **constraints,
+        )
+
+
+class ValidList(ValidColumn):
+    def __init__(
+            self,
+            name: str | Collection[str] | Selector | None = None,
+            inner: PolarsDataType | PythonDataType | None = None,
+            *,
+            contains: Any | None = None,
+            len_ge: int | None = None,
+            len_gt: int | None = None,
+            len_le: int | None = None,
+            len_lt: int | None = None,
+            required: bool | Literal["dynamic"] = True,
+            allow_nulls: bool = False,
+            unique: bool = False,
+            **constraints: Any,
+    ) -> None:
+        dtype: DataType | type[DataType] = pl.List
+        if inner is not None:
+            dtype = pl.List(inner=inner)
+
+        _constraints = _list_constraints_remove_none(
+            contains=contains,
+            len_ge=len_ge,
+            len_gt=len_gt,
+            len_le=len_le,
+            len_lt=len_lt
+        )
+
+        super().__init__(
+            name=name,
+            dtype=dtype,
+            required=required,
+            allow_nulls=allow_nulls,
+            unique=unique,
+            **_constraints,
+            **constraints,
+        )
+
+
 class ValidEnum(ValidColumn):
     def __init__(
             self,
@@ -166,7 +240,7 @@ class ValidEnum(ValidColumn):
             **constraints: Any,
     ) -> None:
         if categories is not None:
-            dtype = pl.Enum(categories=categories)
+            dtype: DataType | type[DataType] = pl.Enum(categories=categories)
         else:
             dtype = pl.Enum
         super().__init__(
@@ -318,7 +392,8 @@ class ValidDateTime(ValidColumn):
     ) -> None:
         if time_zone is not None:
             if time_unit is None:
-                time_unit: Literal["us"] = "us"  # default value for polars
+                # default value for polars
+                time_unit: TimeUnit = "us"  # type: ignore[no-redef]
         if time_unit is not None:
             dtype: DataType | type[DataType] = pl.Datetime(
                 time_unit=time_unit,
@@ -380,79 +455,6 @@ class ValidTime(ValidColumn):
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
-            **constraints,
-        )
-
-
-class ValidArray(ValidColumn):
-    def __init__(
-            self,
-            name: str | Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
-            shape: int | tuple[int, ...] | None = None,
-            *,
-            required: bool | Literal["dynamic"] = True,
-            allow_nulls: bool = False,
-            unique: bool = False,
-            contains: Any | None = None,
-            **constraints: Any,
-    ) -> None:
-        dtype: DataType | type[DataType] = pl.Array
-        if shape is not None or inner is not None:
-            if inner is None:
-                raise TypeError("Please provide inner dtype when setting the shape.")
-            dtype = pl.Array(inner=inner, shape=shape)
-
-        _constraints = _list_constraints_remove_none(
-            contains=contains,
-        )
-
-        super().__init__(
-            name=name,
-            dtype=dtype,
-            required=required,
-            allow_nulls=allow_nulls,
-            unique=unique,
-            **_constraints,
-            **constraints,
-        )
-
-
-class ValidList(ValidColumn):
-    def __init__(
-            self,
-            name: str | Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
-            *,
-            contains: Any | None = None,
-            len_ge: int | None = None,
-            len_gt: int | None = None,
-            len_le: int | None = None,
-            len_lt: int | None = None,
-            required: bool | Literal["dynamic"] = True,
-            allow_nulls: bool = False,
-            unique: bool = False,
-            **constraints: Any,
-    ) -> None:
-        dtype: DataType | type[DataType] = pl.List
-        if inner is not None:
-            dtype = pl.List(inner=inner)
-
-        _constraints = _list_constraints_remove_none(
-            contains=contains,
-            len_ge=len_ge,
-            len_gt=len_gt,
-            len_le=len_le,
-            len_lt=len_lt
-        )
-
-        super().__init__(
-            name=name,
-            dtype=dtype,
-            required=required,
-            allow_nulls=allow_nulls,
-            unique=unique,
-            **_constraints,
             **constraints,
         )
 
@@ -1048,7 +1050,10 @@ class ValidDecimal(ValidColumn):
 
         if precision is not None:
             if scale is not None:
-                dtype = pl.Decimal(precision=precision, scale=scale)
+                dtype: DataType | type[DataType] = pl.Decimal(
+                    precision=precision,
+                    scale=scale,
+                )
             else:
                 dtype = pl.Decimal(precision=precision)
         elif scale is not None:

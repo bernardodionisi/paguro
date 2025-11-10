@@ -13,7 +13,7 @@ from paguro.shared._typing import typed_dicts
 
 if TYPE_CHECKING:
     from paguro.typing import IntoValidation, OnFailureExtra, OnSuccess, FrameLike, \
-    CollectionLike, CollectConfig
+        CollectionLike, CollectConfig
 
 
 def _validate_dispatch_base(
@@ -23,7 +23,7 @@ def _validate_dispatch_base(
         on_success: OnSuccess,
         on_failure: OnFailureExtra,
         validation_error_type: _BaseValidationError | None = None,
-        data: IntoValidation,
+        data: FrameLike | CollectionLike,  # not IntoValidation anymore
         with_row_index: bool | str,  # None used for Collection?
 ):  # returns None | [input] data | some child of BaseValidationError
     # -----------
@@ -35,7 +35,9 @@ def _validate_dispatch_base(
     if validation_error_type is None:
         # base validation error has no filtering capabilities
         validation_error_type = _to_base_validation_error(
-            errors=errors, data=data, with_row_index=with_row_index
+            errors=errors,
+            data=data,
+            with_row_index=with_row_index,
         )
 
     # -----------
@@ -65,7 +67,7 @@ def _validate_dispatch(
         collect: bool | CollectConfig,
         on_success: OnSuccess,
         on_failure: OnFailureExtra,
-        data: IntoValidation,
+        data: FrameLike | CollectionLike,  # not IntoValidation anymore
         with_row_index: bool | str,
 ) -> FrameLike | ValidationError | None:  # returns None | [input] data | some child of BaseValidationError
 
@@ -90,7 +92,6 @@ def _validate_dispatch(
 
         # if validation_error._count_errors() == 0:
         #     return _return_on_success(on_success=on_success, data=data)
-
 
     if validation_error._count_errors() == 0:
         return _return_on_success(on_success=on_success, data=data)

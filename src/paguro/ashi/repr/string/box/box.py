@@ -107,21 +107,6 @@ class Box:
 
         self._inner_box: Box | None = None
 
-    # # we probably dont need to define it
-    # def __deepcopy__(self, memo: dict) -> Self:
-    #     cls = self.__class__
-    #     new = cls.__new__(cls)
-    #
-    #     memo[id(self)] = new
-    #
-    #     for key, value in self.__dict__.items():
-    #         setattr(new, key, copy.deepcopy(value, memo))
-    #
-    #     return new
-    #
-    # def __copy__(self) -> Self:
-    #     return NotImplementedError
-
     def __str__(self):
         return self._to_string()
 

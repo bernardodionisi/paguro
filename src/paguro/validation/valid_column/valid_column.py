@@ -189,30 +189,6 @@ class ValidColumn(_ValidBase):
             **constraints,
         )
 
-    # def __deepcopy__(self, memo: dict) -> Self:
-    #     cls = self.__class__
-    #     new = cls.__new__(cls)
-    #     memo[id(self)] = new
-    #
-    #     # Immutable - shallow copy is fine
-    #     new._name = self._name
-    #     new._dtype = self._dtype
-    #     new._required = self._required
-    #     new._allow_nulls = self._allow_nulls
-    #     new._unique = self._unique
-    #     new._allow_rename = self._allow_rename
-    #     new._allow_drop = self._allow_drop
-    #
-    #     # Mutable - deep copy
-    #     new._constraints = copy.deepcopy(self._constraints, memo)
-    #     new._fields = copy.deepcopy(self._fields, memo) if self._fields else None
-    #     new._info = copy.deepcopy(self._info, memo) if self._info else None
-    #
-    #     return new
-
-    # def __copy__(self) -> Self:
-    #     return self.__deepcopy__()
-
     def __repr__(self) -> str:
         name = (
             f"{self._name!r}"
@@ -220,7 +196,8 @@ class ValidColumn(_ValidBase):
             else f"{self._name}"
         )
 
-        # We'll switch to {self.__class__.__qualname__} once we have a plan for the dtype API
+        # We'll switch to {self.__class__.__qualname__}
+        # once we have a plan for the dtype API
         return f"ValidColumn({name}, ...) [at {hex(id(self))}]"
 
     def __str__(self) -> str:
@@ -359,25 +336,6 @@ class ValidColumn(_ValidBase):
         )
 
     # ------------------------------------------------------------------
-
-    # @property
-    # def name(self) -> str | Selector | None:  # or Selector
-    #     return self._name
-    #
-    # @name.setter
-    # def name(self, value: str | Selector | None) -> None:
-    #     if not self._allow_rename:
-    #         raise ValueError(
-    #             f"Renaming is not allowed for vcol={self._name!r}. "
-    #             f"Please set allow_rename=True to be able to rename the column."
-    #         )
-    #     if value is None:
-    #         self._name = None
-    #     elif isinstance(value, (str, Selector)):
-    #         self._name = value
-    #     else:
-    #         msg = f"name must be a str or Selector, not {type(value)}"
-    #         raise TypeError(msg)
 
     def with_name(self, name: str | Selector | None) -> Self:
         """
@@ -593,7 +551,8 @@ class ValidColumn(_ValidBase):
 
         if cast:
             data = cast_frame(
-                frame=data, schema=self.to_schema(fully_specified=True),
+                frame=data,
+                schema=self.to_schema(fully_specified=True),
             )
 
         errors: typed_dicts.ValidColumnErrors = self._gather_errors(
@@ -751,32 +710,6 @@ class ValidColumn(_ValidBase):
                 _struct_fields=_struct_fields,
                 get_expr=get_expr,
             )
-            # if isinstance(value, pl.Expr):
-            #     keep_columns, with_row_index, expr = replace_expr(
-            #         expr=value,
-            #         column_name=self._name,
-            #         keep_columns=keep_columns,
-            #         with_row_index=with_row_index,
-            #     )
-            #     if _struct_fields:
-            #         predicate: pl.Expr | None = replace_predicate(
-            #             expr=value,
-            #             struct_fields=_struct_fields,
-            #         )
-            #     else:
-            #         predicate = expr
-            # else:
-            #     expr = get_expr(
-            #         attr, value, self._name
-            #     )
-            #     if _struct_fields:
-            #         predicate = get_expr(
-            #             attr,
-            #             value,
-            #             get_struct_expr(struct_fields=_struct_fields)
-            #         )
-            #     else:
-            #         predicate = expr
 
             if attr not in out["constraints"]:
                 out["constraints"][attr] = typed_dicts.ConstraintsErrors()

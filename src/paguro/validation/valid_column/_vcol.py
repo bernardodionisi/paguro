@@ -47,13 +47,8 @@ from polars.selectors import Selector
 if TYPE_CHECKING:
     from paguro.shared.dtypes.into_dtypes import IntoDataType
 
-    from collections.abc import Iterable
-
     import decimal
-    import enum
-    import datetime
-    from polars._typing import TimeUnit, PolarsDataType, PythonDataType
-    from paguro.typing import FieldsValidators
+    from paguro.typing import FieldsValidators, IntoNameVC
 
 __all__ = [
     "VCol"
@@ -80,7 +75,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def __call__(
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -116,7 +111,7 @@ class VCol:
     @classmethod
     def _(
             cls,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -159,9 +154,10 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Struct(  # noqa: N802
             self,
-            *validators: FieldsValidators,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             dtype: pl.Struct | type[pl.Struct] | None = pl.Struct,
+            *,
+            fields: FieldsValidators | None = None,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
             unique: bool = False,
@@ -172,9 +168,6 @@ class VCol:
 
         Parameters
         ----------
-        validators
-            ValidColumn or ValidFrame validators for the fields of the struct column.
-            Think of the struct column as a frame itself.
         name
             The column name.
         dtype
@@ -194,19 +187,19 @@ class VCol:
         .. ipython:: python
 
             print(
-                pg.vcol.Struct(pg.vcol("field", ge=1))
+                pg.vcol.Struct(fields=pg.vcol("field", ge=1))
             )
 
         .. ipython:: python
 
             print(
-                pg.vcol.Struct(pg.vcol.Struct(pg.vcol("field", ge=1)))
+                pg.vcol.Struct(fields=pg.vcol.Struct(fields=pg.vcol("field", ge=1)))
             )
         """
         return ValidStruct(
-            *validators,
             name=name,
             dtype=dtype,
+            fields=fields,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -216,8 +209,8 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Enum(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
-            categories: pl.Series | Iterable[str] | type[enum.Enum] | None = None,
+            name: IntoNameVC = None,
+            dtype: pl.Enum | type[pl.Enum] = pl.Enum,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -244,7 +237,7 @@ class VCol:
         """
         return ValidEnum(
             name=name,
-            categories=categories,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -254,7 +247,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Categorical(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -289,7 +282,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def String(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             contains: str | None = None,
             contains_any: str | None = None,
@@ -352,7 +345,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Binary(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -387,7 +380,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Boolean(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -423,7 +416,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Date(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -459,9 +452,8 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def DateTime(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
-            time_unit: TimeUnit | None = None,
-            time_zone: str | datetime.tzinfo | None = None,
+            name: IntoNameVC = None,
+            dtype: pl.Datetime | type[pl.Datetime] = pl.Datetime,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -489,8 +481,7 @@ class VCol:
         """
         return ValidDateTime(
             name=name,
-            time_unit=time_unit,
-            time_zone=time_zone,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -500,8 +491,8 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Duration(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
-            time_unit: TimeUnit | None = None,
+            name: IntoNameVC = None,
+            dtype: pl.Duration | type[pl.Duration] = pl.Duration,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -528,7 +519,7 @@ class VCol:
         """
         return ValidDuration(
             name=name,
-            time_unit=time_unit,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -538,7 +529,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Time(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             required: bool | Literal["dynamic"] = True,
             allow_nulls: bool = False,
@@ -573,9 +564,8 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Array(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
-            shape: int | tuple[int, ...] | None = None,
+            name: IntoNameVC = None,
+            dtype: pl.Array | type[pl.Array] = pl.Array,
             *,
             contains: Any | None = None,
             required: bool | Literal["dynamic"] = True,
@@ -605,8 +595,7 @@ class VCol:
         """
         return ValidArray(
             name=name,
-            inner=inner,
-            shape=shape,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -617,8 +606,8 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def List(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
-            inner: PolarsDataType | PythonDataType | None = None,
+            name: IntoNameVC = None,
+            dtype: pl.List | type[pl.List] = pl.List,
             *,
             contains: Any | None = None,
             len_ge: int | None = None,
@@ -636,7 +625,6 @@ class VCol:
         Parameters
         ----------
         name
-        inner
         contains
         len_ge
         len_gt
@@ -655,7 +643,7 @@ class VCol:
         """
         return ValidList(
             name=name,
-            inner=inner,
+            dtype=dtype,
             required=required,
             allow_nulls=allow_nulls,
             unique=unique,
@@ -668,9 +656,61 @@ class VCol:
         )
 
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
+    def Decimal(  # noqa: N802
+            self,
+            name: IntoNameVC = None,
+            dtype: pl.Decimal | type[pl.Decimal] = pl.Decimal,
+            *,
+            ge: int | float | decimal.Decimal | None = None,
+            gt: int | float | decimal.Decimal | None = None,
+            le: int | float | decimal.Decimal | None = None,
+            lt: int | float | decimal.Decimal | None = None,
+            is_between: IsBetweenTuple = None,
+            required: bool | Literal["dynamic"] = True,
+            allow_nulls: bool = False,
+            unique: bool = False,
+            **constraints: Any,
+    ) -> ValidDecimal:
+        """
+        Decimal valid column constructor.
+
+        Parameters
+        ----------
+        name
+        ge
+        gt
+        le
+        lt
+        is_between
+{{ AdditionalParameters }}
+
+        Examples
+        --------
+
+        .. ipython:: python
+
+            print(
+                pg.vcol.Decimal()
+            )
+        """
+        return ValidDecimal(
+            name=name,
+            dtype=dtype,
+            required=required,
+            allow_nulls=allow_nulls,
+            unique=unique,
+            ge=ge,
+            gt=gt,
+            le=le,
+            lt=lt,
+            is_between=is_between,
+            **constraints
+        )
+
+    @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Numeric(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -726,7 +766,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Integer(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -776,7 +816,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int8(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -826,7 +866,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int16(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -876,7 +916,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int32(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -926,7 +966,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int64(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -976,7 +1016,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Int128(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1026,7 +1066,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInteger(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1076,7 +1116,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt8(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1126,7 +1166,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt16(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1176,7 +1216,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt32(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1226,7 +1266,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt64(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1276,7 +1316,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def UInt128(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1326,7 +1366,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Float(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1382,7 +1422,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Float32(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1438,7 +1478,7 @@ class VCol:
     @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
     def Float64(  # noqa: N802
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             *,
             ge: int | float | decimal.Decimal | None = None,
             gt: int | float | decimal.Decimal | None = None,
@@ -1488,61 +1528,5 @@ class VCol:
             is_between=is_between,
             is_infinite=is_infinite,
             is_nan=is_nan,
-            **constraints
-        )
-
-    @set_doc_string(additional_parameters=VALID_COLUMNS_SHARED_PARAMETERS)
-    def Decimal(  # noqa: N802
-            self,
-            name: str | typing.Collection[str] | Selector | None = None,
-            precision: int | None = None,
-            scale: int | None = 0,
-            *,
-            ge: int | float | decimal.Decimal | None = None,
-            gt: int | float | decimal.Decimal | None = None,
-            le: int | float | decimal.Decimal | None = None,
-            lt: int | float | decimal.Decimal | None = None,
-            is_between: IsBetweenTuple = None,
-            required: bool | Literal["dynamic"] = True,
-            allow_nulls: bool = False,
-            unique: bool = False,
-            **constraints: Any,
-    ) -> ValidDecimal:
-        """
-        Decimal valid column constructor.
-
-        Parameters
-        ----------
-        name
-        precision
-        scale
-        ge
-        gt
-        le
-        lt
-        is_between
-{{ AdditionalParameters }}
-
-        Examples
-        --------
-
-        .. ipython:: python
-
-            print(
-                pg.vcol.Decimal()
-            )
-        """
-        return ValidDecimal(
-            name=name,
-            scale=scale,
-            precision=precision,
-            required=required,
-            allow_nulls=allow_nulls,
-            unique=unique,
-            ge=ge,
-            gt=gt,
-            le=le,
-            lt=lt,
-            is_between=is_between,
             **constraints
         )

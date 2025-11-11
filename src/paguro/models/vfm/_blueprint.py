@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from paguro import Dataset, LazyDataset
     from paguro.shared.extra_utilities import SchemaTree
 
-__all__ = ["collect_model_blueprint", "schema_to_module"]
+__all__ = ["collect_model_blueprint"]
 
 
 def collect_model_blueprint(
@@ -185,11 +185,15 @@ def schema_to_module(
 # ----------------------------- Helpers --------------------------------
 
 
-def _is_valid_identifier(name: str) -> bool:
+def _is_valid_identifier(
+        name: str,
+) -> bool:
     return bool(name) and name.isidentifier() and not keyword.iskeyword(name)
 
 
-def ensure_nested_keys_are_identifiers(schema: Mapping[str, Any]) -> None:
+def ensure_nested_keys_are_identifiers(
+        schema: Mapping[str, Any],
+) -> None:
     """
     Walk the schema and collect all keys that point to nested mappings but are
     NOT valid Python identifiers. Raise ValueError listing them all.

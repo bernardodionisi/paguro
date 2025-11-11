@@ -540,7 +540,7 @@ class Validation:
             with_row_index=with_row_index,
             get_expr=get_expr,
             cast=cast,
-            _struct_fields=None,
+            _root_down=None,
         )
 
         # store data as frame like:
@@ -572,7 +572,7 @@ class Validation:
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidationErrors:
         if schema is None:
             schema = frame.collect_schema()
@@ -597,7 +597,7 @@ class Validation:
                 with_row_index=with_row_index,
                 get_expr=get_expr,
                 cast=cast,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if column_errors:
                 out["valid_column_list"] = column_errors
@@ -611,7 +611,7 @@ class Validation:
                 with_row_index=with_row_index,
                 get_expr=get_expr,
                 cast=cast,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if frame_errors:
                 out["valid_frame_list"] = frame_errors
@@ -639,7 +639,7 @@ class Validation:
         predicates = self._gather_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=None,
+            _root_down=None,
         )
         return _gather_predicates(predicates, leaf_key="predicate")
 
@@ -648,7 +648,7 @@ class Validation:
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
 
         vcl: ValidColumnList | None = self._expand_valid_column_list(schema=schema)
@@ -659,7 +659,7 @@ class Validation:
             column_predicates = vcl._gather_predicates(
                 schema=schema,
                 get_expr=get_expr,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if column_predicates:
                 out["valid_column_list"] = column_predicates
@@ -668,7 +668,7 @@ class Validation:
             frame_predicates = self._valid_frame_list._gather_predicates(
                 schema=schema,
                 get_expr=get_expr,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if frame_predicates:
                 out["valid_frame_list"] = frame_predicates

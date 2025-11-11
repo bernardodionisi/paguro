@@ -105,7 +105,7 @@ class ValidColumnList(_ValidListBase[ValidColumn]):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, typed_dicts.ValidColumnErrors]:
         return super()._gather_errors(
             frame=frame,
@@ -114,7 +114,7 @@ class ValidColumnList(_ValidListBase[ValidColumn]):
             with_row_index=with_row_index,
             get_expr=get_expr,
             cast=cast,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
 
     # ------------------------------------------------------------------

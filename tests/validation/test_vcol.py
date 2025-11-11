@@ -163,7 +163,12 @@ def test_unique_composite_column_fails(sample_data):
 
 def test_fields_ok(sample_data):
     # 'a' values are [1,2,None]; None does not violate uniqueness here
-    vc = pg.vcol.Struct(pg.vcol("D", dtype=int), name="d")
+    vc = pg.vcol.Struct(
+        name="d",
+        fields=[
+            pg.vcol("D", dtype=int)
+        ]
+    )
     err = vc.validate(sample_data, on_failure="return_error")
     assert err is None
     err = pg.Validation(vc).validate(sample_data, on_failure="return_error")
@@ -173,9 +178,12 @@ def test_fields_ok(sample_data):
 def test_unique_fileds_fails(sample_data):
     # ('b','c') has two identical pairs: (5,'b') appears twice
     vc = pg.vcol.Struct(
-        pg.vcol("D", dtype=int, allow_nulls=True, ge=10),
-        pg.vcol("D1", dtype=int, required=True, allow_nulls=True, ge=10)
-        , name="d"
+        name="d",
+        fields=[
+            pg.vcol("D", dtype=int, allow_nulls=True, ge=10),
+            pg.vcol("D1", dtype=int, required=True, allow_nulls=True, ge=10)
+        ]
+
     )
 
     errors_counts = {'required': {'errors': 1},

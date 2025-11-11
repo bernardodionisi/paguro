@@ -6,6 +6,8 @@ Typing
 .. python-apigen-entity-summary:: paguro.typing.Validators
 .. python-apigen-entity-summary:: paguro.typing.ValidatorOrExpr
 
+.. python-apigen-entity-summary:: paguro.typing.IntoNameVC
+
 .. python-apigen-entity-summary:: paguro.typing.IntoValidators
 .. python-apigen-entity-summary:: paguro.typing.IntoValidation
 .. python-apigen-entity-summary:: paguro.typing.FieldsValidators

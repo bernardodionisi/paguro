@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
+from paguro.utils.dependencies import re, shlex
 from paguro.validation.exception.errors.base_validation_error import (
     _BaseValidationError,
 )
@@ -111,17 +112,23 @@ def _validate_dispatch(
         if on_failure.endswith("return_data"):
             return validation_error._data
 
-        elif on_failure.endswith("return_valid_data"):
+        elif "return_valid_data" in on_failure:
+            indices = parse_trailing_index(on_failure)
+
             return validation_error._filter(
                 how="using_predicates",
                 return_valid=True,
-                collect=collect
+                collect=collect,
+                row_index=indices,
             )
-        elif on_failure.endswith("return_invalid_data"):
+        elif "return_invalid_data" in on_failure:
+            indices = parse_trailing_index(on_failure)
+
             return validation_error._filter(
                 how="using_predicates",
                 return_valid=False,
-                collect=collect
+                collect=collect,
+                row_index=indices,
             )
         else:
             msg = f"Unknown on_failure={on_failure!r}"
@@ -163,3 +170,35 @@ def _return_on_success(
         data: IntoValidation,
 ):
     return None if on_success == "return_none" else data
+
+
+# ----------------------------------------------------------------------
+
+
+def parse_trailing_index(s: str) -> list[str] | None:
+    """
+    Extracts and parses a list of strings from the end of the given string.
+
+    Examples:
+        "some text [a, b, c]" -> ['a', 'b', 'c']
+        "example [\"x, y\", z]" -> ['x, y', 'z']
+        "no brackets here" -> None
+    """
+    # Match trailing [...] at the end of the string
+    _match = re.search(r'\[([^\]]*)\]\s*$', s)
+    if not _match:
+        return None
+
+    content = _match.group(1).strip()
+    if not content:
+        return []
+
+    # Use shlex to split like shell arguments,
+    # so it handles quotes and commas inside quotes
+    lexer = shlex.shlex(content, posix=True)
+    lexer.whitespace = ','
+    lexer.whitespace_split = True
+    lexer.commenters = ''
+
+    # Return list of stripped strings
+    return [token.strip() for token in lexer if token.strip()]

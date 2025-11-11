@@ -26,19 +26,12 @@ from paguro.models.vfm.utils import (
     _unwrap_annotation,
     _is_validcolumn_annotation
 )
-from paguro.validation.shared._docs import set_doc_string, VALIDATE_PARAMS
 
 from paguro.validation.valid_column.valid_column import ValidColumn
 from paguro.validation.valid_frame.valid_frame import ValidFrame
 
 if TYPE_CHECKING:
     from paguro.models.vfm.utils import VFrameModelConfig
-    from paguro.validation.exception.errors.validation_error import ValidationError
-
-    from paguro.typing import (
-        IntoValidation, ValidationMode, IntoKeepColumns, OnSuccess,
-        OnFailureExtra, FrameLike
-    )
 
 IncludeItem = Union[type, tuple[type, str]]
 
@@ -63,24 +56,26 @@ def _choose_name_from_default(
 
     if not isinstance(_def_name, str):
         if not _allow_non_str:
-            raise TypeError(
+            msg = (
                 f"{owner.__name__}.{attr}: "
                 f"default ValidColumn has non-string name {_def_name!r}; "
                 "set model_config.allow_non_string_default_name = True "
                 "to allow this."
             )
+            raise TypeError(msg)
         return attr, _def_name, False
 
     if not _prefer_default:
         if _def_name == attr:
             return attr, attr, False
-        raise ValueError(
+        msg = (
             f"{owner.__name__}.{attr}: "
             f"default ValidColumn name '{_def_name}' "
             f"does not match attribute name '{attr}'. "
             "Either rename the default to match, omit its name, "
             "or set model_config.prefer_default_name = True."
         )
+        raise ValueError(msg)
 
     if _def_name:
         return _def_name, _def_name, True
@@ -139,39 +134,46 @@ def _apply_includes(
 
     raw_include = getattr(cls, "__include__", ()) or ()
     if not isinstance(raw_include, (tuple, list)):
-        raise TypeError(
+        msg = (
             f"{cls.__name__}.__include__ must be a sequence of VFrameModel types "
-            "or (VFrameModel, prefix) tuples")
+            "or (VFrameModel, prefix) tuples"
+        )
+        raise TypeError(msg)
 
     # Normalize to a list of (model, prefix)
     normalized: list[tuple[type[VFrameModel], str]] = []
     for item in raw_include:
         if isinstance(item, tuple):
             if len(item) != 2:
-                raise TypeError(
+                msg = (
                     f"{cls.__name__}.__include__: "
                     f"tuple items must be (Model, 'prefix')"
                 )
+                raise TypeError(msg)
             model, prefix = item
             if not (isinstance(model, type) and issubclass(model, VFrameModel)):
-                raise TypeError(
+                msg = (
                     f"{cls.__name__}.__include__: "
                     f"first element must be a VFrameModel subclass, got {model!r}"
                 )
+                raise TypeError(msg)
             if not isinstance(prefix, str):
-                raise TypeError(
+                msg = (
                     f"{cls.__name__}.__include__: "
                     f"prefix must be a str, got {type(prefix).__name__}"
                 )
+                raise TypeError(msg)
             normalized.append((model, prefix))
         else:
             # plain model, empty prefix
             model = item
             if not (isinstance(model, type) and issubclass(model, VFrameModel)):
-                raise TypeError(
-                    f"{cls.__name__}.__include__: items must be VFrameModel subclasses "
+                msg = (
+                    f"{cls.__name__}.__include__: "
+                    f"items must be VFrameModel subclasses "
                     f"or (VFrameModel, str) tuples; got {item!r}"
                 )
+                raise TypeError(msg)
             normalized.append((model, ""))
 
     # Copy columns with collision checks
@@ -180,10 +182,11 @@ def _apply_includes(
             new_name = f"{pref}{c._name}"
             if new_name in merged:
                 prev = origins.get(new_name, "unknown origin")
-                raise ValueError(
+                msg = (
                     f"{cls.__name__}: include collision for column '{new_name}'. "
                     f"Already from {prev}, also from include {inc_model.__name__}."
                 )
+                raise ValueError(msg)
             merged[new_name] = _strict_align_name(
                 owner=cls,
                 attr=new_name,
@@ -268,19 +271,26 @@ def _build_from_struct_annotation(
     """Annotation is a VFrameModel subclass → struct column."""
     nested = model_cls._valid_frame
     if default is not None and not isinstance(default, ValidColumn):
-        raise TypeError(
+        msg = (
             f"{owner_cls.__name__}.{attr}: "
             f"struct columns may default to a ValidColumn or None; "
             f"got {type(default)!r}."
         )
+        raise TypeError(msg)
 
     if isinstance(default, ValidColumn):
         col, ext = _build_from_validcolumn_default(
-            owner_cls=owner_cls, attr=attr, default_col=default, cfg=cfg
+            owner_cls=owner_cls,
+            attr=attr,
+            default_col=default,
+            cfg=cfg,
         )
         col = _with_struct_fields(
-            col, nested, name=getattr(col, "_name", None), allow_rename=False,
-            owner=owner_cls, attr=attr,
+            col, nested,
+            name=getattr(col, "_name", None),
+            allow_rename=False,
+            owner=owner_cls,
+            attr=attr,
         )
         return col, ext
 
@@ -297,10 +307,12 @@ def _build_from_plain_annotation(
 ) -> tuple[ValidColumn, str]:
     """Annotation is ValidColumn (type) → must not have default."""
     if isinstance(default, ValidColumn):
-        raise TypeError(
-            f"{owner_cls.__name__}.{attr}: provide either an annotation (type[ValidColumn]) "
+        msg = (
+            f"{owner_cls.__name__}.{attr}: "
+            f"provide either an annotation (type[ValidColumn]) "
             f"or a default (ValidColumn instance), not both."
         )
+        raise TypeError(msg)
     return ValidColumn(name=attr), attr
 
 
@@ -319,10 +331,11 @@ def _insert_column(
     if key in merged_cols:
         if not allow_override:
             prev = origins.get(key, "inherited/include")
-            raise ValueError(
+            msg = (
                 f"{owner_cls.__name__}: column name '{key}' collides with {prev}, "
                 f"and model_config.allow_attribute_override is False."
             )
+            raise ValueError(msg)
         _prev_internal = getattr(merged_cols[key], "_name", None)
         if isinstance(_prev_internal, str):
             seen_internal_names.pop(_prev_internal, None)
@@ -331,10 +344,12 @@ def _insert_column(
     if internal is not None:
         prev_attr = seen_internal_names.get(internal)
         if prev_attr is not None and prev_attr != attr:
-            raise ValueError(
-                f"{owner_cls.__name__}: internal column name '{internal}' used by multiple attributes "
+            msg = (
+                f"{owner_cls.__name__}: "
+                f"internal column name '{internal}' used by multiple attributes "
                 f"('{prev_attr}' and '{attr}')."
             )
+            raise ValueError(msg)
         seen_internal_names[internal] = attr
 
     merged_cols[key] = col
@@ -358,10 +373,11 @@ def _process_one_annotation(
         return
 
     if attr in seen_attr_names:
-        raise ValueError(
+        msg = (
             f"{owner_cls.__name__}: "
             f"duplicate attribute name '{attr}' in the same class body."
         )
+        raise ValueError(msg)
     seen_attr_names.add(attr)
 
     annot = _unwrap_annotation(raw_annot)

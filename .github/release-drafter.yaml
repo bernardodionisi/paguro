@@ -1,0 +1,81 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+exclude-labels:
+  - skip changelog
+  - release
+
+change-template: "- $TITLE (#$NUMBER)"
+change-title-escapes: '\<*_&'
+
+replacers:
+  # Remove conventional commit prefixes (feat:, fix:, etc.)
+  - search: '/- (build|chore|ci|docs|feat|fix|perf|refactor|release|test)(\(.*\))?(\!)?: /g'
+    replace: '- '
+
+autolabeler:
+  - label: breaking
+    title:
+      - '/^.*!:/'
+  - label: enhancement
+    title:
+      - '/^feat/'
+  - label: fix
+    title:
+      - '/^fix/'
+  - label: performance
+    title:
+      - '/^perf/'
+  - label: documentation
+    title:
+      - '/^docs/'
+  - label: build
+    title:
+      - '/^build|ci/'
+  - label: internal
+    title:
+      - '/^chore|refactor|test/'
+
+version-resolver:
+  major:
+    labels: [ breaking ]
+  minor:
+    labels: [ enhancement, performance ]
+  patch:
+    labels: [ fix, documentation, build, internal ]
+  default: patch
+
+categories:
+  - title: "💥 Breaking changes"
+    labels: [ breaking ]
+  - title: "🚀 Performance improvements"
+    labels: [ performance ]
+  - title: "✨ Enhancements"
+    labels: [ enhancement ]
+  - title: "🐞 Bug fixes"
+    labels: [ fix ]
+  - title: "📖 Documentation"
+    labels: [ documentation ]
+  - title: "📦 Build & CI"
+    labels: [ build ]
+  - title: "🛠️ Internal changes"
+    labels: [ internal ]
+
+  - title: "🗂️ Other changes"
+    labels: [ "*" ]                # wildcard (= any label or none)
+    exclude-labels: # prevent duplicates; list ALL labels used above
+      - breaking
+      - performance
+      - enhancement
+      - fix
+      - documentation
+      - build
+      - internal
+
+template: |
+  ## Changes
+  $CHANGES
+
+  ---
+  🧡 Thank you to all our contributors!
+  $CONTRIBUTORS

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Sequence
 
 from paguro.shared.extra_utilities import collect_data_len
 from paguro.shared.frame_tree.utils.counts import count_keys_per_ancestor
@@ -86,13 +86,14 @@ class ValidationError(_BaseValidationError):
             *,
             return_valid: bool,
             collect: bool | CollectConfig,
+            row_index: str | Sequence[str] | None,
     ) -> FrameLike:
         lazy = _filter(
             root=self._mapping,
             data=self._data,
             how=how,
             return_valid=return_valid,
-            row_index=self._row_index,
+            row_index=self._row_index if row_index is None else row_index,
         )
         if collect:
             if isinstance(collect, dict):
@@ -100,12 +101,18 @@ class ValidationError(_BaseValidationError):
             return lazy.collect()
         return lazy
 
-    def _collect_row_count(self, *, valid_data: bool | None) -> int:
+    def _collect_row_count(
+            self,
+            *,
+            valid_data: bool | None,
+    ) -> int:
         if isinstance(valid_data, bool):
-            data = self._filter(return_valid=valid_data, collect=False)
+            data = self._filter(
+                return_valid=valid_data,
+                collect=False,
+                row_index=None,
+            )
         else:
             data = self._data
 
         return collect_data_len(data)
-
-

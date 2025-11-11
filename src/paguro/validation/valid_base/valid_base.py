@@ -216,7 +216,7 @@ class _ValidBase(ABC):
         #     with_row_index=with_row_index,
         #     get_expr=get_expr,
         #     cast=cast,
-        #     _struct_fields=None,
+        #     _root_down=None,
         # )
         #
         # return _validate_dispatch(
@@ -243,7 +243,7 @@ class _ValidBase(ABC):
             keep_columns: IntoKeepColumns,
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidColumnDataErrors | typed_dicts.ValidFrameDataErrors:
         raise NotImplementedError
 
@@ -256,7 +256,7 @@ class _ValidBase(ABC):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,  # for fields errors in ValidColumn, validators errors
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidColumnErrors | typed_dicts.ValidFrameErrors:
         out: typed_dicts.ValidColumnErrors | typed_dicts.ValidFrameErrors = {}  # type: ignore
 
@@ -280,7 +280,7 @@ class _ValidBase(ABC):
                 keep_columns=keep_columns,
                 with_row_index=with_row_index,
                 get_expr=get_expr,  # needs to be inserted in ValidColumn
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
 
             if data_errors:
@@ -314,7 +314,7 @@ class _ValidBase(ABC):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         raise NotImplementedError
 
@@ -323,14 +323,14 @@ class _ValidBase(ABC):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         out = {}
 
         predicates = self._gather_focal_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
 
         if predicates:

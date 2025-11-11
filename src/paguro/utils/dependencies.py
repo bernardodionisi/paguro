@@ -36,6 +36,9 @@ from importlib.util import find_spec
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
+if TYPE_CHECKING:
+    from collections.abc import Hashable
+
 _PYARROW_AVAILABLE = True
 _NUMPY_AVAILABLE = True
 _RICH_AVAILABLE = True
@@ -179,7 +182,7 @@ if TYPE_CHECKING:
     import json
     import pathlib
     import re
-    from collections.abc import Hashable
+    import shlex
 
     import numpy
     import pyarrow
@@ -199,6 +202,7 @@ else:
     decimal, _ = _lazy_import("decimal")
     hashlib, _ = _lazy_import("hashlib")
     pathlib, _ = _lazy_import("pathlib")
+    shlex, _ = _lazy_import("shlex")
 
     # optional third party libs
     pyarrow, _PYARROW_AVAILABLE = _lazy_import("pyarrow")
@@ -248,6 +252,7 @@ __all__ = [
     "io",
     "hashlib",
     "pathlib",
+    "shlex",
     # lazy-load third party libs
     "numpy",
     "pyarrow",

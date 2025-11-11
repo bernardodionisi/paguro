@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import typing
 from collections import abc
 from collections.abc import Sequence, Mapping
 from typing import TYPE_CHECKING, Literal, TypeAlias, Union, TypedDict, Any
@@ -79,6 +80,16 @@ FieldsValidators
 
 # ------------------
 
+IntoNameVC: TypeAlias = Union[
+    str,
+    typing.Collection[str],
+    cs.Selector,
+    int,
+    None
+]
+"""
+IntoNameVC
+"""
 
 # ------------------
 
@@ -166,7 +177,6 @@ ValidationMode
 - `"all"`  : validate both schema and data content
 - `"none"`
 """
-
 
 
 class _CollectConfig(TypedDict, total=False):

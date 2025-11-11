@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal, TYPE_CHECKING
 
 import polars as pl
@@ -19,7 +19,7 @@ def _filter(
         how: Literal["using_index", "using_predicates"] | None,
         *,
         data: FrameLike,
-        row_index: str | None,
+        row_index: str | Sequence[str] | None,
         return_valid: bool,
 ) -> pl.LazyFrame | LazyDataset:
     # right now we only rely on predicates. But for some reason if predicates
@@ -32,9 +32,21 @@ def _filter(
 
     elif how == "using_index":
         if row_index is None:
-            msg = "row_index cannot be None when using _filter_using_index"
-            raise ValueError(msg)
-        data = data.with_row_index(name=row_index)
+            msg = (
+                "\nWe are trying to filter the data using an index column "
+                "(filtering with predicates "
+                "may not work due to nested use of vframes),\n"
+                "however no index was provided. \n"
+                "In order to provide a column index to filter with please set "
+                "keep_columns to either True or to the column(s) that "
+                "you want to keep during validation. "
+                "Then specify the index column as "
+                "on_failure='return_valid_data[index column]'"
+            )
+            raise FilterWithIndexException(msg)
+
+        # only whe row_index was bool if it a string we are passing a column
+        # data = data.with_row_index(name=row_index)
 
         return _filter_using_index(
             root=root,
@@ -45,9 +57,11 @@ def _filter(
     else:  # using_predicates
         try:
             return _filter_using_predicates(
-                root=root, frame=data, return_valid=return_valid
+                root=root,
+                frame=data,
+                return_valid=return_valid,
             )
-        except ValueError:
+        except FilterWithPredicatesException:
             return _filter(
                 root=root,
                 data=data,
@@ -63,8 +77,10 @@ def _filter_using_predicates(
         frame: pl.LazyFrame | LazyDataset,
         return_valid: bool,
 ) -> pl.LazyFrame | LazyDataset:
+    # raises FilterWithPredicatesException, if predicates can't be used
     _predicates: list[pl.Expr] = _gather_predicates(
-        root, leaf_key="predicate"
+        root,
+        leaf_key="predicate",
     )
 
     if (
@@ -87,7 +103,7 @@ def _filter_using_index(
         root: Mapping[str, Any],
         *,
         frame: pl.LazyFrame | LazyDataset,
-        row_index: str | None,
+        row_index: str | Sequence[str] | None,
         return_valid: bool,
 ) -> pl.LazyFrame | LazyDataset:
     if row_index is None:
@@ -143,10 +159,18 @@ def _gather_predicates(
             # skip this entire dict (including siblings)
             continue
 
-        # t = d.get("fields", None)  # do not collect predicates for fields
-        # if t is not None:
-        #     msg = "Can't use predicates when data has been unnested"
-        #     raise ValueError(msg)
+        t = d.get("fields", None)  # do not collect predicates for fields
+        if (
+                t is not None
+                and "valid_frame_list" in t
+        ):
+            vfl = set(t.get("valid_frame_list", {}).keys())
+            msg = (
+                f"\nUnable to filter the data using "
+                f"predicates then vframes are set within nested fields: {vfl}\n"
+                f"Please filter using an index."
+            )
+            raise FilterWithPredicatesException(msg)
 
         # Process values: only push nested dicts; ignore sequences entirely
         for k, v in d.items():
@@ -208,3 +232,11 @@ def _reduce_expr_list(
         return functools.reduce(lambda x, y: x & y, expressions)
     else:  # logic == "or":
         return functools.reduce(lambda x, y: x | y, expressions)
+
+
+class FilterWithPredicatesException(Exception):
+    ...
+
+
+class FilterWithIndexException(Exception):
+    ...

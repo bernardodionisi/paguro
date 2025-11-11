@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import warnings
 
-import typing
 from typing import TYPE_CHECKING, Any, Literal
 
 import polars as pl
@@ -41,7 +40,7 @@ from paguro.validation.valid_column.utils.dtype_errors import dtype_errors
 from paguro.validation.valid_column.utils.exprs.predicates import (
     get_allow_nulls_predicate,
     get_unique_predicate,
-    get_struct_expr
+    get_new_root
 )
 
 from paguro.validation.valid_column.utils.exprs.replace_expr import (
@@ -59,7 +58,7 @@ from paguro.validation.valid_column.utils.utils import (
 )
 from paguro.validation.valid_column.utils.exprs.build_expression import _build_expr
 from paguro.shared._typing import typed_dicts
-from paguro.typing import CollectConfig
+from paguro.typing import CollectConfig, IntoNameVC
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Iterable
@@ -93,7 +92,7 @@ class ValidColumn(_ValidBase):
 
     def __init__(
             self,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -147,10 +146,19 @@ class ValidColumn(_ValidBase):
 
             See :ref:`example <tutorials-shorts-vcol-constraints>`
         """
-        if name is not None and not isinstance(name, (str, Selector)):
-            name = cs.by_name(name)
 
-        super().__init__(name=name, constraints=constraints)
+        self._index: int | None = None  # is set if name is an integer
+        if not isinstance(name, (str, Selector)):
+            if isinstance(name, int):
+                self._index = name
+                name = cs.by_index(name)
+            elif name is not None:  # Collection[str]
+                name = cs.by_name(name)
+
+        super().__init__(
+            name=name,  # string | None | Selector
+            constraints=constraints,
+        )
 
         self._dtype = parse_dtype_into_frozenset(dtype)
 
@@ -165,12 +173,12 @@ class ValidColumn(_ValidBase):
         self._allow_drop: bool = True
 
         self._fields: Validation | None = None
-        self._field_parents: tuple[str, ...] | None = None
+        self._root_up: tuple[str, ...] | None = None
 
     @classmethod
     def _(
             cls,
-            name: str | typing.Collection[str] | Selector | None = None,
+            name: IntoNameVC = None,
             dtype: IntoDataType | None = None,
             *,
             required: bool | Literal["dynamic"] = True,
@@ -189,30 +197,6 @@ class ValidColumn(_ValidBase):
             **constraints,
         )
 
-    # def __deepcopy__(self, memo: dict) -> Self:
-    #     cls = self.__class__
-    #     new = cls.__new__(cls)
-    #     memo[id(self)] = new
-    #
-    #     # Immutable - shallow copy is fine
-    #     new._name = self._name
-    #     new._dtype = self._dtype
-    #     new._required = self._required
-    #     new._allow_nulls = self._allow_nulls
-    #     new._unique = self._unique
-    #     new._allow_rename = self._allow_rename
-    #     new._allow_drop = self._allow_drop
-    #
-    #     # Mutable - deep copy
-    #     new._constraints = copy.deepcopy(self._constraints, memo)
-    #     new._fields = copy.deepcopy(self._fields, memo) if self._fields else None
-    #     new._info = copy.deepcopy(self._info, memo) if self._info else None
-    #
-    #     return new
-
-    # def __copy__(self) -> Self:
-    #     return self.__deepcopy__()
-
     def __repr__(self) -> str:
         name = (
             f"{self._name!r}"
@@ -220,7 +204,8 @@ class ValidColumn(_ValidBase):
             else f"{self._name}"
         )
 
-        # We'll switch to {self.__class__.__qualname__} once we have a plan for the dtype API
+        # We'll switch to {self.__class__.__qualname__}
+        # once we have a plan for the dtype API
         return f"ValidColumn({name}, ...) [at {hex(id(self))}]"
 
     def __str__(self) -> str:
@@ -255,15 +240,19 @@ class ValidColumn(_ValidBase):
 
     def __call__(self) -> pl.Expr:
         if isinstance(self._name, str):
-            if self._field_parents is None:
+            if self._root_up is None:
                 return pl.col(self._name)
             else:
-                return get_struct_expr(self._field_parents).struct.field(self._name)
+                _root_up = (*self._root_up, self._name)
+                return get_new_root(_root_up)
         else:
-            if self._field_parents is not None:
-                warnings.warn(
-                    f"Fields parents ignored for column with non string name: {self._name}"
+            if self._root_up is not None:
+                msg = (
+                    f"Nested parents have been ignored."
+                    f"Please ensure a string column name to include nested parents: "
+                    f"current name is {type(self._name)}"
                 )
+                warnings.warn(msg)
 
             if self._name is None:
                 return cs.all()
@@ -359,25 +348,6 @@ class ValidColumn(_ValidBase):
         )
 
     # ------------------------------------------------------------------
-
-    # @property
-    # def name(self) -> str | Selector | None:  # or Selector
-    #     return self._name
-    #
-    # @name.setter
-    # def name(self, value: str | Selector | None) -> None:
-    #     if not self._allow_rename:
-    #         raise ValueError(
-    #             f"Renaming is not allowed for vcol={self._name!r}. "
-    #             f"Please set allow_rename=True to be able to rename the column."
-    #         )
-    #     if value is None:
-    #         self._name = None
-    #     elif isinstance(value, (str, Selector)):
-    #         self._name = value
-    #     else:
-    #         msg = f"name must be a str or Selector, not {type(value)}"
-    #         raise TypeError(msg)
 
     def with_name(self, name: str | Selector | None) -> Self:
         """
@@ -593,7 +563,8 @@ class ValidColumn(_ValidBase):
 
         if cast:
             data = cast_frame(
-                frame=data, schema=self.to_schema(fully_specified=True),
+                frame=data,
+                schema=self.to_schema(fully_specified=True),
             )
 
         errors: typed_dicts.ValidColumnErrors = self._gather_errors(
@@ -603,7 +574,7 @@ class ValidColumn(_ValidBase):
             with_row_index=with_row_index,
             get_expr=get_expr,
             cast=cast,
-            _struct_fields=None,
+            _root_down=None,
         )
 
         out: typed_dicts.ValidationErrors = {
@@ -671,15 +642,18 @@ class ValidColumn(_ValidBase):
             get_expr: Callable[
                 [str, Any, str | pl.Expr | None], pl.Expr
             ],  # for ValidColumn
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidColumnDataErrors:
         if self._name not in schema:
             return {}
 
         out: typed_dicts.ValidColumnDataErrors = {}
 
-        if _struct_fields:
-            _struct_fields = (*_struct_fields, self._name)
+        if _root_down:
+            _root_down = (*_root_down, self._name)  # add last name
+            _new_root: pl.Expr | None = get_new_root(_root_down)
+        else:
+            _new_root = None
 
         if not self._allow_nulls:
             if "allow_nulls" not in out:
@@ -687,16 +661,18 @@ class ValidColumn(_ValidBase):
 
             out["allow_nulls"]["predicate"] = get_allow_nulls_predicate(
                 column_name=self._name,
-                struct_fields=_struct_fields,
+                _new_root=_new_root,
             )
 
             if not _has_additional_columns(
-                    keep_columns=keep_columns, with_row_index=with_row_index
+                    keep_columns=keep_columns,
+                    with_row_index=with_row_index,
             ):
                 # if no additional columns requested, then just count the nulls
                 # we would not have other columns to use for filtering anyway
                 out["allow_nulls"]["maybe_errors"] = _null_counts(
-                    data=frame, column_name=self._name
+                    data=frame,
+                    column_name=self._name,
                 )
             else:
                 # if additional columns requested return the same level of observation
@@ -716,7 +692,7 @@ class ValidColumn(_ValidBase):
 
             out["unique"]["predicate"] = get_unique_predicate(
                 column_name=self._name,
-                struct_fields=_struct_fields,
+                _new_root=_new_root,
             )
 
             out["unique"]["maybe_errors"] = _get_duplicates(
@@ -748,35 +724,9 @@ class ValidColumn(_ValidBase):
                 attr=attr,
                 keep_columns=keep_columns,
                 with_row_index=with_row_index,
-                _struct_fields=_struct_fields,
+                _new_root=_new_root,
                 get_expr=get_expr,
             )
-            # if isinstance(value, pl.Expr):
-            #     keep_columns, with_row_index, expr = replace_expr(
-            #         expr=value,
-            #         column_name=self._name,
-            #         keep_columns=keep_columns,
-            #         with_row_index=with_row_index,
-            #     )
-            #     if _struct_fields:
-            #         predicate: pl.Expr | None = replace_predicate(
-            #             expr=value,
-            #             struct_fields=_struct_fields,
-            #         )
-            #     else:
-            #         predicate = expr
-            # else:
-            #     expr = get_expr(
-            #         attr, value, self._name
-            #     )
-            #     if _struct_fields:
-            #         predicate = get_expr(
-            #             attr,
-            #             value,
-            #             get_struct_expr(struct_fields=_struct_fields)
-            #         )
-            #     else:
-            #         predicate = expr
 
             if attr not in out["constraints"]:
                 out["constraints"][attr] = typed_dicts.ConstraintsErrors()
@@ -816,7 +766,7 @@ class ValidColumn(_ValidBase):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidColumnFieldsErrors:
         if self._fields is None:
             return {}
@@ -832,14 +782,25 @@ class ValidColumn(_ValidBase):
             with_row_index=False,  # row index is created after unnest
         )
 
-        struct_schema = (
-            frame
-            .select(self._name)
-            .collect_schema()
-            [self._name]
-            .to_schema()  # type: ignore[attr-defined]
-            # .select(self._name).unnest(self._name).collect_schema()
-        )
+        # this fails if the user does not specify a name/selector that only includes
+        # struct columns
+
+        try:
+            struct_schema = (
+                frame
+                .select(self._name)
+                .collect_schema()
+                [self._name]
+                .to_schema()  # type: ignore[attr-defined]
+                # .select(self._name).unnest(self._name).collect_schema()
+            )
+        except AttributeError as e:
+            msg = (
+                f"Failed collecting the schema for column: {self._name}.\n"
+                f"The column must be a struct column, try defining the valid column "
+                f"with a column name or a selector pointing only to struct columns."
+            )
+            raise type(e)(msg) from e
 
         frame = frame.unnest(self._name)
 
@@ -849,10 +810,10 @@ class ValidColumn(_ValidBase):
                 schema=self._fields.to_schema(check_dtypes=True),
             )
 
-        if not _struct_fields:
-            _struct_fields = (self._name,)
+        if not _root_down:
+            _root_down = (self._name,)
         else:
-            _struct_fields = (*_struct_fields, self._name)
+            _root_down = (*_root_down, self._name)
 
         errors: typed_dicts.ValidationErrors = self._fields._gather_errors(
             frame=frame,
@@ -863,7 +824,7 @@ class ValidColumn(_ValidBase):
             with_row_index=with_row_index,
             get_expr=get_expr,
             cast=cast,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
 
         if errors:
@@ -879,7 +840,7 @@ class ValidColumn(_ValidBase):
             with_row_index: bool | str,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
             cast: bool,
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> typed_dicts.ValidColumnErrors:
         out: typed_dicts.ValidColumnErrors = {}
 
@@ -898,7 +859,7 @@ class ValidColumn(_ValidBase):
                 keep_columns=keep_columns,
                 with_row_index=with_row_index,
                 get_expr=get_expr,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
 
             if eager_errors:
@@ -913,7 +874,7 @@ class ValidColumn(_ValidBase):
                 with_row_index=with_row_index,
                 get_expr=get_expr,
                 cast=cast,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if fields_errors:
                 out.update(fields_errors)
@@ -922,7 +883,10 @@ class ValidColumn(_ValidBase):
 
     # ------------------------------------------------------------------
 
-    def gather_predicates(self, target: pl.Schema | None = None) -> list[pl.Expr]:
+    def gather_predicates(
+            self,
+            target: pl.Schema | None = None,
+    ) -> list[pl.Expr]:
         """
         Gather all the set rules as predicate expressions.
 
@@ -954,7 +918,7 @@ class ValidColumn(_ValidBase):
         predicates = self._gather_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=None,
+            _root_down=None,
         )
 
         out = {
@@ -968,20 +932,20 @@ class ValidColumn(_ValidBase):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
 
         out = super()._gather_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=_struct_fields,
+            _root_down=_root_down,
         )
 
         if self._fields is not None:
             validators_errors = self._gather_fields_predicates(
                 schema=schema,
                 get_expr=get_expr,
-                _struct_fields=_struct_fields,
+                _root_down=_root_down,
             )
             if validators_errors:
                 out.update(validators_errors)
@@ -993,7 +957,7 @@ class ValidColumn(_ValidBase):
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
         if self._fields is None:
             return {}
@@ -1002,10 +966,10 @@ class ValidColumn(_ValidBase):
             if self._name not in schema:
                 return {}
 
-        if not _struct_fields:
-            _struct_fields = (self._name,)
+        if not _root_down:
+            _root_down = (self._name,)
         else:
-            _struct_fields = (*_struct_fields, self._name)
+            _root_down = (*_root_down, self._name)
 
         if schema is not None:
             # here name is the column name of a vcol that has fields
@@ -1023,19 +987,19 @@ class ValidColumn(_ValidBase):
         predicates = self._fields._gather_predicates(
             schema=schema,
             get_expr=get_expr,
-            _struct_fields=_struct_fields
+            _root_down=_root_down
         )
 
         if predicates:
             return {"fields": predicates}
         return {}
 
-    def _gather_focal_predicates(
+    def _gather_focal_predicates(  # corresponds to _gather_data_errors
             self,
             schema: pl.Schema | None,
             *,
             get_expr: Callable[[str, Any, str | pl.Expr | None], pl.Expr],
-            _struct_fields: tuple[str, ...] | None,
+            _root_down: tuple[str, ...] | None,
     ) -> dict[str, Any]:
 
         if schema is not None:
@@ -1044,8 +1008,11 @@ class ValidColumn(_ValidBase):
 
         out: dict[str, Any] = {}
 
-        if _struct_fields:
-            _struct_fields = (*_struct_fields, self._name)
+        if _root_down:
+            _root_down = (*_root_down, self._name)  # add last name
+            _new_root: pl.Expr | None = get_new_root(_root_down)
+        else:
+            _new_root = None
 
         if not self._allow_nulls:
             if "allow_nulls" not in out:
@@ -1053,7 +1020,7 @@ class ValidColumn(_ValidBase):
 
             out["allow_nulls"]["predicate"] = get_allow_nulls_predicate(
                 column_name=self._name,
-                struct_fields=_struct_fields,
+                _new_root=_new_root,
             )
 
         if self._unique:
@@ -1065,7 +1032,7 @@ class ValidColumn(_ValidBase):
 
             out["unique"]["predicate"] = get_unique_predicate(
                 column_name=self._name,
-                struct_fields=_struct_fields,
+                _new_root=_new_root,
             )
 
         if self._constraints:
@@ -1076,7 +1043,7 @@ class ValidColumn(_ValidBase):
                 column_name=self._name,
                 value=value,
                 attr=attr,
-                _struct_fields=_struct_fields,
+                _new_root=_new_root,
                 get_expr=get_expr,
             )
 

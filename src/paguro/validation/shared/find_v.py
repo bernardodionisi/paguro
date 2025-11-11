@@ -65,9 +65,9 @@ def find_unique_vcol(
         root: Validation | None,
         *,
         name: str | None | Selector,
-        include_transformed_frames: bool,  # False
-        include_fields: bool,  # False
-        return_first: bool,  # False
+        include_transformed_frames: bool,
+        include_fields: bool,
+        return_first: bool,
 ) -> ValidColumn | None:
     """
     Search the graph (frames + optionally column fields) for columns named `name`.
@@ -102,10 +102,10 @@ def find_all_vcols_multi(
         root: Validation | None,
         *,
         names: Iterable[str | None | Selector],
-        include_transformed_frames: bool,  # False
-        include_fields: bool,  # False
-        dedupe: bool,  # suggested True
-        group_by_name: bool,  # False
+        include_transformed_frames: bool,
+        include_fields: bool,
+        dedupe: bool,
+        group_by_name: bool,
 ) -> list[ValidColumn] | dict[str | None | Selector, list[ValidColumn]]:
     """
     Return all ValidColumns whose name matches ANY of `names`
@@ -198,9 +198,9 @@ def find_unique_vframe(
         root: Validation | None,
         *,
         name: str | None,
-        include_transformed_frames: bool,  # False
-        include_fields: bool,  # False
-        return_first: bool,  # False
+        include_transformed_frames: bool,
+        include_fields: bool,
+        return_first: bool,
 ) -> ValidFrame | None:
     """
     Return the unique ValidFrame with `_name == name` across the graph.
@@ -243,10 +243,10 @@ def find_all_vframes_multi(
         root: Validation | None,
         *,
         names: Iterable[str | None],
-        include_transformed_frames: bool,  # False
-        include_fields: bool,  # False
-        dedupe: bool,  # True
-        group_by_name: bool,  # False
+        include_transformed_frames: bool,
+        include_fields: bool,
+        dedupe: bool,
+        group_by_name: bool,
 ) -> list[ValidFrame] | dict[str | None, list[ValidFrame]]:
     """
     Return all ValidFrames whose `_name` is in `names`, traversing frames and,

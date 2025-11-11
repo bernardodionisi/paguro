@@ -3,10 +3,11 @@ name: Release
 on:
   push:
     tags:
-      - v*
+      - "v*"
 
 permissions:
   contents: write
+  id-token: write  # required for PyPI trusted publishing
 
 concurrency:
   group: release-${{ github.ref }}
@@ -14,47 +15,17 @@ concurrency:
 
 jobs:
   build:
-    name: Build the package
+    name: Build package
     uses: ./.github/workflows/build.yaml
 
   docs:
-    name: Build the docs
+    name: Build documentation
     uses: ./.github/workflows/docs.yaml
-
-  release:
-    name: Create GitHub release
-    runs-on: ubuntu-latest
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all commits and tags
-          ref: ${{ github.ref }}
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: paguro ${{ github.ref_name }}
-          generate_release_notes: true
-          draft: false
-          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'a') || contains(github.ref_name, 'b') }}
-          files: |
-            dist/*
 
   publish-testpypi:
     name: Publish to TestPyPI
-    needs: [build, release]
+    needs: [ build ]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -63,6 +34,7 @@ jobs:
           path: dist/
 
       - name: Publish to TestPyPI
+        id: publish-testpypi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -73,11 +45,9 @@ jobs:
 
   publish-pypi:
     name: Publish to PyPI
-    needs: [build, release]
+    needs: [ publish-testpypi ]
+    if: ${{ needs.publish-testpypi.result == 'success' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -86,9 +56,49 @@ jobs:
           path: dist/
 
       - name: Publish to PyPI
+        id: publish-pypi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages_dir: dist/
           attestations: true
           print-hash: true
           verbose: true
+
+  release:
+    name: Create GitHub Release
+    needs: [ publish-pypi ]
+    if: ${{ needs.publish-pypi.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Generate release notes (Release Drafter)
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yaml
+          name: paguro ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}
+          version: ${{ github.ref_name }}
+          commitish: ${{ github.sha }}
+          disable-autolabeler: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attach artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'a') || contains(github.ref_name, 'b') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

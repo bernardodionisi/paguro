@@ -187,13 +187,13 @@ class VCol:
         .. ipython:: python
 
             print(
-                pg.vcol.Struct(pg.vcol("field", ge=1))
+                pg.vcol.Struct(fields=pg.vcol("field", ge=1))
             )
 
         .. ipython:: python
 
             print(
-                pg.vcol.Struct(pg.vcol.Struct(pg.vcol("field", ge=1)))
+                pg.vcol.Struct(fields=pg.vcol.Struct(fields=pg.vcol("field", ge=1)))
             )
         """
         return ValidStruct(

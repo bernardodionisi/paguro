@@ -40,8 +40,8 @@ def _filter(
                 "In order to provide a column index to filter with please set "
                 "keep_columns to either True or to the column(s) that "
                 "you want to keep during validation. "
-                "Then specify the index column as ..."  # TODO example!
-                ""
+                "Then specify the index column as "
+                "on_failure='return_valid_data[index column]'"
             )
             raise FilterWithIndexException(msg)
 

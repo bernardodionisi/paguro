@@ -11,12 +11,10 @@ on:
       - 'release/*'
 
 jobs:
-  # Build wheels inline for tests; avoids cross-workflow waits
-
   test-coverage:
     name: Coverage
-    # no need to wait for wheel
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -43,15 +41,17 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
+  # Matrix testing — runs only for pull requests
   test-latest:
     name: Latest
-    needs: wait-on-wheel
     if: ${{ github.event_name == 'pull_request' }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.11, 3.12, 3.13 ]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.11, 3.12, 3.13]
+
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -64,7 +64,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
 
       - name: Install test dependencies
-        run: uv pip install --system -e ".[test]"
+        run: uv pip install --system -e ".[extra, test]"
 
       - name: Install the `paguro` package (editable)
         run: uv pip install --system -e .

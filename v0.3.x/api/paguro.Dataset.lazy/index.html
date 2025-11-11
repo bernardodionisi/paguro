@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../paguro.Dataset.to_lazyframe/">
+        <link rel="prev" href="../paguro.Dataset.write_parquet/">
       
       
         <link rel="next" href="../paguro.Dataset.group_by/">
@@ -46,7 +46,7 @@
         <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
         <link rel="stylesheet" type="text/css" href="../../_static/st-table-rst.css?v=5cb5d07b" />
         <link rel="stylesheet" type="text/css" href="../../_static/pg-admonitions.css?v=559bfeff" />
-        <link rel="stylesheet" type="text/css" href="../../_static/pg-badges.css?v=0eed4538" />
+        <link rel="stylesheet" type="text/css" href="../../_static/pg-badges.css?v=5ef0485a" />
         <link rel="stylesheet" type="text/css" href="../../_static/st-overloads.css?v=249c14dd" />
         <link rel="stylesheet" type="text/css" href="../../_static/st-tab-set.css?v=52c091ee" />
         <link rel="stylesheet" type="text/css" href="../../_static/st-code-copybotton.css?v=96d63070" />
@@ -54,7 +54,7 @@
         <link rel="stylesheet" type="text/css" href="../../_static/st-nav-bar.css?v=c3acb505" />
         <link rel="stylesheet" type="text/css" href="../../_static/st-base.css?v=9613568b" />
         <link rel="stylesheet" type="text/css" href="../../_static/pg-admonitions.css?v=559bfeff" />
-        <link rel="stylesheet" type="text/css" href="../../_static/pg-badges.css?v=0eed4538" />
+        <link rel="stylesheet" type="text/css" href="../../_static/pg-badges.css?v=5ef0485a" />
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -1636,6 +1636,32 @@
             <span>Adapted</span>
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../paguro.Dataset.write_parquet/" class="md-nav__link">
+        
+  
+  
+    <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
+  
+  <span class="md-ellipsis">
+    <span title="paguro.Dataset.write_parquet (Python method) — Write parquet."><span>write_<wbr>parquet</span></span>
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -4854,32 +4880,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../paguro.Dataset.write_parquet/" class="md-nav__link">
-        
-  
-  
-    <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
-  
-  <span class="md-ellipsis">
-    <span title="paguro.Dataset.write_parquet (Python method) — See write_parquet"><span>write_<wbr>parquet</span></span>
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../paguro.Dataset.to_arrow/" class="md-nav__link">
         
   
@@ -5703,6 +5703,32 @@
             <span>Adapted</span>
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../paguro.LazyDataset.sink_parquet/" class="md-nav__link">
+        
+  
+  
+    <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
+  
+  <span class="md-ellipsis">
+    <span title="paguro.LazyDataset.sink_parquet (Python method) — Sink parquet."><span>sink_<wbr>parquet</span></span>
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -7413,32 +7439,6 @@
   
   <span class="md-ellipsis">
     <span title="paguro.LazyDataset.sink_ndjson (Python method) — See sink_ndjson"><span>sink_<wbr>ndjson</span></span>
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../paguro.LazyDataset.sink_parquet/" class="md-nav__link">
-        
-  
-  
-    <span aria-label="Python method" class="objinfo-icon objinfo-icon__procedure" title="Python method">M</span>
-  
-  <span class="md-ellipsis">
-    <span title="paguro.LazyDataset.sink_parquet (Python method) — See sink_parquet"><span>sink_<wbr>parquet</span></span>
     
   </span>
   
@@ -15932,7 +15932,7 @@
     <span aria-label="Python function" class="objinfo-icon objinfo-icon__procedure" title="Python function">F</span>
   
   <span class="md-ellipsis">
-    <span title="paguro.read_parquet (Python function) — Wrapper for Polars .read_parquet()"><span>read_<wbr>parquet</span></span>
+    <span title="paguro.read_parquet (Python function) — Polars .read_parquet() with the option to pass a model or read paguro metadata."><span>read_<wbr>parquet</span></span>
     
   </span>
   
@@ -16247,7 +16247,7 @@
     <span aria-label="Python function" class="objinfo-icon objinfo-icon__procedure" title="Python function">F</span>
   
   <span class="md-ellipsis">
-    <span title="paguro.scan_parquet (Python function) — Wrapper for Polars .scan_parquet()"><span>scan_<wbr>parquet</span></span>
+    <span title="paguro.scan_parquet (Python function) — Polars .scan_parquet() with the option to pass a model or read paguro metadata."><span>scan_<wbr>parquet</span></span>
     
   </span>
   
@@ -17679,12 +17679,12 @@
         <script src="../../_static/sphinx_immaterial_theme.32136f45f91ae6956.min.js?v=a7a9472a"></script>
         <script src="../../_static/design-tabs.js?v=f930bc37"></script>
         <script src="../../_static/st-page.js?v=79d9d11a"></script>
-        <script src="../../_static/pg-typing.js?v=77aa4017"></script>
+        <script src="../../_static/pg-typing.js?v=3006a645"></script>
         <script src="../../_static/pg-shorten-generic.js?v=1c9942f2"></script>
         <script src="../../_static/st-code-copybotton.js?v=7f31c1ea"></script>
         <script src="../../_static/st-code-copybotton-old-good.js?v=565591f9"></script>
         <script src="../../_static/st-code-ipythonprompt.js?v=ed5c3914"></script>
-        <script src="../../_static/pg-typing.js?v=77aa4017"></script>
+        <script src="../../_static/pg-typing.js?v=3006a645"></script>
         <script src="../../_static/pg-shorten-generic.js?v=1c9942f2"></script>
     
   </body>

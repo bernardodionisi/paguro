@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+.r1 {color: #ad5d5d; text-decoration-color: #ad5d5d}
+.r2 {color: #ad5d5d; text-decoration-color: #ad5d5d; font-weight: bold}
+.r3 {color: #3a5a67; text-decoration-color: #3a5a67}
+.r4 {font-weight: bold; text-decoration: underline}
+.r5 {color: #676784; text-decoration-color: #676784}
+.r6 {color: #d18b47; text-decoration-color: #d18b47; font-style: italic}
+body {
+    color: #000000;
+    background-color: #ffffff;
+}
+</style>
+<style>body { color: #747C8C !important; background-color: #21232B !important; }</style></head>
+<body>
+    <pre style="font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><code style="font-family:inherit"><span class="r1">══</span> <span class="r2">ValidationError</span> <span class="r1">═════════════════════════════════════════</span>
+<span class="r1"> </span><span class="r3">━━━━━━━━━━━━━━━━━━━━</span> <span class="r4">valid_frame_list</span> <span class="r3">━━━━━━━━━━━━━━━━━━━━</span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">╭─</span> &gt; &quot;&quot; <span class="r5">───────────────────────────────────────────────╮</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> --------------------------------------</span> <span class="r6">constraints</span> <span class="r3">- </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>  ‣ delivery_after_order                            <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>    <span class="r1">errors</span>                                          <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">┌───────────────┬────────────┐</span>                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">│ delivery_date ┆ order_date │</span>                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">│ ---           ┆ ---        │</span>                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">│ date          ┆ date       │</span>                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">╞═══════════════╪════════════╡</span>                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">│ 2024-09-01    ┆ 2025-01-01 │</span>                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">└───────────────┴────────────┘</span>                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r1">shape: (1, 2)</span>                                 <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3">                                                      </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> ---------------------------------------</span> <span class="r6">validators</span> <span class="r3">- </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>  <span class="r4">valid_column_list</span>                                 <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>    * &#x27;total_amount&#x27;                                <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r6">allow_nulls</span>                                   <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>        <span class="r1">errors</span>                                      <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">┌──────────────────────────┐</span>              <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">│ total_amount[null_count] │</span>              <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">│ ---                      │</span>              <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">│ u32                      │</span>              <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">╞══════════════════════════╡</span>              <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">│ 1                        │</span>              <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">└──────────────────────────┘</span>              <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">shape: (1, 1)</span>                             <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>      <span class="r6">constraints</span>                                   <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>        ‣ ge                                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>          <span class="r1">errors</span>                                    <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">┌──────────────┐</span>                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">│ total_amount │</span>                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">│ ---          │</span>                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">│ i64          │</span>                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">╞══════════════╡</span>                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">│ -50          │</span>                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">└──────────────┘</span>                        <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3"> </span>            <span class="r1">shape: (1, 1)</span>                           <span class="r3"> </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">│</span><span class="r3">                                                      </span><span class="r5">│</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3"> </span><span class="r5">╰──────────────────────────────────────────────────────╯</span><span class="r3"> </span><span class="r1"> </span>
+<span class="r1"> </span><span class="r3">                                                          </span><span class="r1"> </span>
+<span class="r1">════════════════════════════════════════════════════════════</span>
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+ width="812"  height="315"  viewBox="0 0 812 315">
+  <text x="10" y="30"
+        font-family="Menlo, SF Mono, Consolas, monospace"
+        font-size="20"
+        fill="#666"
+        xml:space="preserve">
+    <tspan x="10" dy="0" font-weight="bold">orders</tspan>
+    <tspan x="10" dy="12.5"></tspan>
+    <tspan x="10" dy="25">┌──────┬─────────────┬────────────┬───────────────┬──────────────┐</tspan>
+    <tspan x="10" dy="25">│ id   ┆ customer_id ┆ order_date ┆ delivery_date ┆ total_amount │</tspan>
+    <tspan x="10" dy="25">│ ---  ┆ ---         ┆ ---        ┆ ---           ┆ ---          │</tspan>
+    <tspan x="10" dy="25">│ i64  ┆ str         ┆ date       ┆ date          ┆ i64          │</tspan>
+    <tspan x="10" dy="25">╞══════╪═════════════╪════════════╪═══════════════╪══════════════╡</tspan>
+    <tspan x="10" dy="25">│ 1001 ┆ C001        ┆ 2024-03-10 ┆ 2024-03-14    ┆ null         │</tspan>
+    <tspan x="10" dy="25">│ 1002 ┆ C002        ┆ 2025-01-01 ┆ 2024-09-01    ┆ 180          │</tspan>
+    <tspan x="10" dy="25">│ 1003 ┆ C003        ┆ 2025-03-15 ┆ 2025-03-18    ┆ -50          │</tspan>
+    <tspan x="10" dy="25">│ 1004 ┆ C005        ┆ null       ┆ 2025-03-20    ┆ 120          │</tspan>
+    <tspan x="10" dy="25">└──────┴─────────────┴────────────┴───────────────┴──────────────┘</tspan>
+  </text>
+</svg>

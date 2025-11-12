@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 import polars as pl
+import polars.selectors as cs
 
 from paguro.shared._typing._typing import IsBetweenTuple
+from paguro.validation.valid_column.utils.exprs.predicates import get_new_root
 
 from paguro.validation.valid_column.valid_column import ValidColumn
 
@@ -172,6 +175,14 @@ class ValidArray(ValidColumn):
             **constraints,
         )
 
+    def __getitem__(self, item: int) -> pl.Expr:
+        return _getitem_from_sequence_type(
+            name=self._name,
+            item=item,
+            root_up=self._root_up,
+            sequence_type="arr",
+        )
+
 
 class ValidList(ValidColumn):
     def __init__(
@@ -205,6 +216,14 @@ class ValidList(ValidColumn):
             unique=unique,
             **_constraints,
             **constraints,
+        )
+
+    def __getitem__(self, item: int) -> pl.Expr:
+        return _getitem_from_sequence_type(
+            name=self._name,
+            item=item,
+            root_up=self._root_up,
+            sequence_type="list",
         )
 
 
@@ -1044,3 +1063,42 @@ def _int_constraints_remove_none(**d: Any) -> dict[str, Any]:
         else:
             out[k] = v
     return out
+
+
+def _getitem_from_sequence_type(
+        name: str | None | cs.Selector,
+        root_up: tuple[str, ...] | None,
+        item: int,
+        sequence_type: Literal["arr", "list"]
+) -> pl.Expr:
+    # todo: allow for root_up to include selectors! think through model vs validation
+    if isinstance(name, str):
+        if root_up is None:
+            _ns = getattr(pl.col(name), sequence_type)
+            return _ns.get(item)
+        else:
+            root_up = (*root_up, name)
+            _ns = getattr(get_new_root(root_up), sequence_type)
+            return _ns.get(item)
+    else:
+        if root_up is not None:
+            msg = (
+                f"Nested parents have been ignored."
+                f"Please ensure a string column name to include nested parents: "
+                f"current name is {type(name)}"
+            )
+            warnings.warn(msg)
+
+        if name is None:
+            _ns = getattr(cs.all(), sequence_type)
+
+            return _ns.get(item)
+        elif isinstance(name, cs.Selector):
+            _ns = getattr(name, sequence_type)
+            return _ns.get(item)
+
+        else:
+            msg = (
+                f"Invalid column name {name}."  # we never should reach here
+            )
+            raise TypeError(msg)

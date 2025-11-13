@@ -118,6 +118,3 @@ Please refer to the index page for some :ref:`basic usage examples <quick-exampl
         .. ipython:: python
 
             print(orders_nested)
-
-
-🔊 Stay tuned for tutorial releases! 🔊

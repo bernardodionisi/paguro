@@ -882,6 +882,55 @@ def _assemble_vc_class(cls: type, ns: dict[str, object], ) -> type:
 class VFrameModel(metaclass=_VFrameMeta):
     """
     Base model for specifying a ValidFrame validator.
+
+    A model-based alternative to :obj:`vframe <paguro.validation.vframe>`
+    for constructing a :obj:`ValidFrame <paguro.validation.ValidFrame>`
+    validator.
+
+    Defining a model
+    ================
+
+    Define a model similarly to how you would in `pydantic`
+    or any other validation library that supports a model based API.
+
+    The `base model` for your tabular data is
+    :obj:`VFrameModel <paguro.models.vfm.VFrameModel>`,
+    which allows you to represents:
+
+    - column validators using :obj:`vcol <paguro.validation.vcol>`
+    - cross-column validation rules using the `@constraint` decorator
+    - validation rules over transformation of your data using the `@transformed` decorator
+
+    Example
+    =======
+
+    .. paguro-example:: Simple Example: OrdersModel
+
+        .. ipython:: python
+
+            import paguro as pg
+            from paguro.models import vfm
+
+        .. paguro-example:: Failing Validation
+            :collapsible: open
+
+            .. ipython:: python
+
+                class OrdersModel(vfm.VFrameModel):
+                    customer_id = pg.vcol.String(str_starts_with="CUSTOMER")
+                    order_date = pg.vcol.Date()
+                    total_amount = pg.vcol(ge=0)
+
+            .. ipython:: python
+
+                print(orders) # orders is defined in the tutorials page
+
+            .. ipython:: python
+
+                try:
+                    orders = pg.Dataset(orders).with_model(OrdersModel)
+                except pg.exceptions.ValidationError as e:
+                    print(e)
     """
 
     # Plain columns:

@@ -118,6 +118,24 @@ Please refer to the index page for some :ref:`basic usage examples <quick-exampl
         .. ipython:: python
 
             print(orders_nested)
+Tutorials
+=========
 
 
-🔊 Stay tuned for tutorial releases! 🔊
+Validation
+----------
+
+.. list-table::
+   :class: table-rst
+   :widths: 30 70
+   :header-rows: 0
+
+   * - :doc:`vframe model <tutorials/Tutorials/Validation/vframe_model>`
+     - Model-based validation using :obj:`VFrameModel <paguro.models.vfm.VFrameModel>`
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :titlesonly:
+
+   tutorials-autotoc/Tutorials/index
